@@ -1,0 +1,152 @@
+.calendar {
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px 16px 16px;
+  width: 100%;
+}
+
+.calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.calendar-month {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.calendar-nav {
+  background: none;
+  color: var(--neon);
+  display: flex;
+  padding: 4px;
+  border-radius: 50%;
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.calendar-nav:hover {
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 8px var(--neon-soft));
+}
+
+.calendar-nav:disabled {
+  color: var(--gray-dark);
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+.calendar-nav:disabled:hover {
+  transform: none;
+  filter: none;
+}
+
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.calendar-weekdays {
+  margin-bottom: 10px;
+}
+
+.calendar-weekdays span {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--gray);
+}
+
+.calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: transparent;
+  color: var(--neon);
+  font-size: 0.9rem;
+  font-weight: 600;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.calendar-cell.empty { pointer-events: none; }
+
+/* Disponible */
+.calendar-cell.is-available {
+  background-color: var(--panel-2);
+  cursor: pointer;
+}
+
+.calendar-cell.is-available:hover {
+  background-color: var(--neon-dim);
+  box-shadow: 0 0 14px var(--neon-soft);
+  transform: scale(1.08);
+}
+
+/* Días pasados y cerrados */
+.calendar-cell.is-past,
+.calendar-cell.is-closed {
+  background-color: transparent;
+  color: var(--gray-dark);
+  cursor: not-allowed;
+}
+
+/* Sin turnos libres */
+.calendar-cell.is-full {
+  background-color: var(--gray-darker);
+  color: #6b6b6b;
+  cursor: not-allowed;
+}
+
+/* Seleccionado */
+.calendar-cell.is-selected {
+  background-color: var(--neon);
+  color: #0a0a0a;
+  font-weight: 800;
+  box-shadow: 0 0 22px var(--neon-soft);
+}
+
+/* Hoy */
+.calendar-cell.is-today::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.calendar-cell.is-selected.is-today::after { background-color: #0a0a0a; }
+
+.calendar-legend {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 0.72rem;
+  color: var(--gray);
+}
+
+.calendar-legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-free { background-color: var(--panel-2); border: 1px solid var(--neon); }
+.dot-full { background-color: var(--gray-darker); }

@@ -1,0 +1,79 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --black: #0a0a0a;
+  --panel: #111111;
+  --panel-2: #171717;
+  --neon: #b8f14c;
+  --neon-soft: rgba(184, 241, 76, 0.35);
+  --neon-dim: rgba(184, 241, 76, 0.12);
+  --white: #f4f4f4;
+  --gray: #9a9a9a;
+  --gray-dark: #4a4a4a;
+  --gray-darker: #2a2a2a;
+  --border: #262626;
+  --danger: #ff6b6b;
+}
+
+html, body, #root { min-height: 100%; }
+
+body {
+  font-family: 'Poppins', system-ui, sans-serif;
+  background-color: var(--black);
+  color: var(--white);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: inherit; border: none; cursor: pointer; }
+input, textarea { font-family: inherit; }
+a { text-decoration: none; }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--panel); }
+::-webkit-scrollbar-thumb { background: var(--neon); border-radius: 4px; }
+
+/* Oculta visualmente pero mantiene accesible para lectores de pantalla */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Animaciones globales ---------- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 18px var(--neon-soft); }
+  50%      { box-shadow: 0 0 34px var(--neon-soft), 0 0 60px var(--neon-dim); }
+}
+
+@keyframes neonSweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(0.9) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.fade-up { animation: fadeUp 0.55s ease-out both; }
+
+/* Respeta "reducir movimiento" del sistema: apaga animaciones para
+   quien lo tenga activado (accesibilidad + ahorro de batería) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
