@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local Netlify folder
+.netlify
+
+# Env vars / secrets
+.env
+.env.*
+!.env.example
+
+# Datos locales sensibles
+public/turnos.csv

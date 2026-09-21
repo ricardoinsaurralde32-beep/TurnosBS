@@ -1,0 +1,193 @@
+.db-head { margin-bottom: 16px; }
+.db-head h1 { color: #fff; font-size: 1.3rem; font-weight: 800; margin-bottom: 4px; }
+.db-sub { color: var(--gray); font-size: 0.85rem; }
+
+.db-range {
+  display: inline-flex;
+  gap: 4px;
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.db-range-btn {
+  padding: 7px 18px;
+  border-radius: 999px;
+  background: none;
+  color: var(--gray);
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+.db-range-btn.active { background-color: var(--neon); color: #0a0a0a; }
+.db-range-btn:not(.active):hover { color: #fff; }
+
+.db-kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.db-kpi {
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.db-kpi-wide { grid-column: 1 / -1; }
+
+.db-kpi-value { color: var(--neon); font-size: 1.6rem; font-weight: 800; }
+.db-kpi-value-sm { font-size: 1.05rem; text-transform: capitalize; }
+.db-kpi-label { color: var(--gray); font-size: 0.74rem; text-transform: capitalize; }
+
+.db-grid { display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px; }
+
+.db-card {
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+}
+.db-card h2 { color: #fff; font-size: 0.92rem; font-weight: 700; margin-bottom: 14px; text-transform: capitalize; }
+
+.db-empty { color: var(--gray); font-size: 0.82rem; }
+
+.db-bars { display: flex; flex-direction: column; gap: 12px; }
+
+.db-bar-row { display: grid; grid-template-columns: 100px 1fr 26px; align-items: center; gap: 10px; }
+.db-bar-label { color: var(--gray); font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.db-bar-track { height: 8px; background-color: var(--gray-darker); border-radius: 999px; overflow: hidden; }
+.db-bar-fill { height: 100%; background-color: var(--neon); border-radius: 999px; box-shadow: 0 0 10px var(--neon-soft); transition: width 0.4s ease; }
+
+.db-bar-count { color: #fff; font-size: 0.78rem; font-weight: 700; text-align: right; }
+
+.db-pros { display: flex; flex-direction: column; gap: 10px; }
+
+.db-pro-row { display: flex; align-items: center; gap: 10px; }
+
+.db-pro-photo {
+  width: 34px; height: 34px; border-radius: 50%;
+  overflow: hidden; flex-shrink: 0;
+  background-color: var(--panel-2);
+  border: 1px solid var(--neon);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--neon); font-size: 0.8rem; font-weight: 700;
+}
+.db-pro-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+.db-pro-name { color: #fff; font-size: 0.85rem; font-weight: 600; flex: 1; }
+.db-pro-count { color: var(--neon); font-size: 0.8rem; font-weight: 700; }
+
+/* Ausencias sin aviso, listado nominal */
+.db-noshows { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
+
+.db-noshow-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background-color: rgba(255,107,107,0.06);
+  border: 1px solid rgba(255,107,107,0.2);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.db-noshow-name { color: #fff; font-size: 0.82rem; font-weight: 600; }
+.db-noshow-date { color: var(--danger); font-size: 0.74rem; font-weight: 600; white-space: nowrap; }
+
+.db-actions { display: flex; flex-direction: column; gap: 10px; }
+
+.db-action-btn {
+  text-align: center;
+  padding: 12px;
+  border-radius: 999px;
+  background-color: var(--neon);
+  color: #0a0a0a;
+  font-weight: 800;
+  font-size: 0.88rem;
+  transition: all 0.2s ease;
+}
+.db-action-btn:hover { transform: translateY(-2px); box-shadow: 0 0 20px var(--neon-soft); }
+
+.db-action-ghost {
+  background-color: transparent;
+  border: 1px solid var(--border);
+  color: var(--white);
+}
+.db-action-ghost:hover { border-color: var(--neon); color: var(--neon); box-shadow: none; transform: none; }
+
+@media (min-width: 900px) {
+  .db-kpis { grid-template-columns: repeat(4, 1fr); }
+  .db-kpi-wide { grid-column: span 1; }
+  .db-grid { flex-direction: row; flex-wrap: wrap; }
+  .db-card { flex: 1 1 300px; }
+  .db-actions { flex-direction: row; }
+  .db-action-btn { flex: 0 0 auto; padding: 12px 28px; }
+}
+
+.db-kpi-next {
+  border-color: rgba(255,176,32,0.4);
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+  transition: all 0.2s ease;
+}
+.db-kpi-next:hover { border-color: #ffb020; box-shadow: 0 0 18px rgba(255,176,32,0.15); }
+.db-kpi-next .db-kpi-value { color: #ffb020; }
+
+.db-next-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,176,32,0.25);
+  animation: fadeUp 0.25s ease-out;
+}
+.db-next-details span { color: #fff; font-size: 0.82rem; }
+.db-next-details a {
+  color: #ffb020;
+  font-size: 0.78rem;
+  font-weight: 700;
+  width: fit-content;
+}
+.db-next-details a:hover { text-decoration: underline; }
+
+.db-kpi-next {
+  border-color: rgba(255,176,32,0.4);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+.db-kpi-next:hover { border-color: #ffb020; box-shadow: 0 0 18px rgba(255,176,32,0.15); }
+.db-kpi-next .db-kpi-value { color: #ffb020; }
+
+.db-next-details {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid rgba(255,176,32,0.25);
+  animation: fadeUp 0.25s ease-out;
+}
+.db-next-details span { color: #fff; font-size: 0.82rem; }
+.db-next-details a { color: #ffb020; font-size: 0.78rem; font-weight: 700; width: fit-content; }
+.db-next-details a:hover { text-decoration: underline; }
+
+.db-revenue-card {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: linear-gradient(165deg, rgba(184,241,76,0.1), rgba(184,241,76,0.02));
+  border: 1px solid rgba(184,241,76,0.3);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 22px;
+  text-align: center;
+}
+.db-revenue-label { color: var(--gray); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.db-revenue-value { color: var(--neon); font-size: 2rem; font-weight: 800; }
+.db-revenue-hint { color: #666; font-size: 0.7rem; margin-top: 4px; }

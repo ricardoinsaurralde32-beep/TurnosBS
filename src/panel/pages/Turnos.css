@@ -1,0 +1,124 @@
+.tn-head { margin-bottom: 18px; }
+.tn-head h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+.tn-sub { color: var(--gray); font-size: 0.83rem; }
+
+.tn-filters { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+
+.tn-search {
+  display: flex; align-items: center; gap: 8px;
+  background-color: var(--black);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 9px 16px;
+}
+.tn-search svg { color: var(--gray); flex-shrink: 0; }
+.tn-search input {
+  background: none; border: none; outline: none;
+  color: #fff; font-size: 0.86rem; width: 100%;
+}
+
+.tn-filters select {
+  background-color: var(--black);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 9px 14px;
+  color: #fff;
+  font-size: 0.82rem;
+  outline: none;
+}
+.tn-filters select:focus { border-color: var(--neon); }
+
+.tn-count-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.tn-count { color: var(--gray); font-size: 0.76rem; margin-bottom: 0; }
+
+.tn-export {
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(184,241,76,0.35);
+  background-color: rgba(184,241,76,0.06);
+  color: var(--neon);
+  font-size: 0.76rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+.tn-export:hover:not(:disabled) { background-color: rgba(184,241,76,0.14); }
+.tn-export:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.tn-empty {
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 30px;
+  text-align: center;
+  color: var(--gray);
+}
+
+.tn-list { display: flex; flex-direction: column; gap: 10px; }
+
+.tn-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--neon);
+  border-radius: 12px;
+  padding: 12px 14px;
+  flex-wrap: wrap;
+}
+.tn-card.tn-done   { border-left-color: #4ade80; }
+.tn-card.tn-noshow { border-left-color: var(--danger); opacity: 0.75; }
+
+.tn-main { flex: 1; min-width: 180px; }
+
+.tn-client-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 3px; }
+.tn-client { color: #fff; font-weight: 700; font-size: 0.9rem; }
+
+.tn-loyal {
+  font-size: 0.66rem; font-weight: 800;
+  color: var(--neon);
+  background-color: rgba(184,241,76,0.1);
+  border: 1px solid rgba(184,241,76,0.3);
+  padding: 2px 8px; border-radius: 999px;
+}
+
+.tn-pro-badge {
+  font-size: 0.65rem; font-weight: 700;
+  color: var(--gray);
+  background-color: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  padding: 2px 8px; border-radius: 999px;
+}
+
+.tn-services { color: var(--gray); font-size: 0.78rem; margin-bottom: 3px; }
+.tn-phone { color: #666; font-size: 0.72rem; }
+
+.tn-side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+.tn-date { color: #fff; font-size: 0.78rem; font-weight: 600; }
+.tn-time { color: var(--neon); font-size: 0.82rem; font-weight: 700; }
+
+.tn-status { font-size: 0.68rem; font-weight: 700; margin-top: 4px; }
+.tn-status-pending { color: var(--neon); }
+.tn-status-done { color: #4ade80; }
+.tn-status-noshow { color: var(--danger); }
+
+@media (min-width: 900px) {
+  .tn-filters { flex-direction: row; }
+  .tn-search { flex: 1; }
+  .tn-filters select { flex: 0 0 200px; }
+}
+
+.tn-card-actions { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+
+.tn-icon-btn {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s ease;
+}
+.tn-icon-ok { background-color: rgba(74,222,128,0.14); color: #4ade80; border: 1px solid rgba(74,222,128,0.35); margin-top: 4px; }
+.tn-icon-ok:hover { background-color: #4ade80; color: #0a0a0a; }
+.tn-icon-no { background-color: rgba(255,107,107,0.14); color: var(--danger); border: 1px solid rgba(255,107,107,0.35); }
+.tn-icon-no:hover { background-color: var(--danger); color: #0a0a0a; }
+
+.tn-cancel-link { background: none; color: #666; font-size: 0.66rem; font-weight: 600; text-decoration: underline; }
+.tn-cancel-link:hover { color: var(--danger); }

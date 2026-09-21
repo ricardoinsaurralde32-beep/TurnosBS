@@ -296,3 +296,24 @@
     padding: 17px 30px;
   }
 }
+
+.ft-manage-btn {
+  margin-top: 16px;
+  padding: 9px 22px;
+  border-radius: 999px;
+  border: 1px solid var(--neon);
+  background-color: transparent;
+  color: var(--neon);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  transition: all 0.28s ease;
+}
+.ft-manage-btn:hover {
+  background-color: var(--neon);
+  color: #0a0a0a;
+  box-shadow: 0 0 22px rgba(184,241,76,0.4);
+  transform: translateY(-2px);
+}
+.ft-manage-btn:hover { background-color: rgba(10,10,10,0.16); transform: translateY(-2px); }

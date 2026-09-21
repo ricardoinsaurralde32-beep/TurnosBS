@@ -1,0 +1,72 @@
+.pf-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.88);
+  backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; z-index: 1000;
+  animation: pmFade 0.25s ease-out;
+}
+@keyframes pmFade { from { opacity: 0; } to { opacity: 1; } }
+
+.pf-card {
+  width: 100%; max-width: 460px;
+  background: linear-gradient(165deg, #141414 0%, #0b0b0b 100%);
+  border: 1px solid rgba(184,241,76,0.28);
+  border-radius: 20px;
+  overflow: hidden;
+  max-height: 88vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.7);
+  animation: pmPop 0.4s cubic-bezier(0.2,0.9,0.3,1.2) both;
+}
+@keyframes pmPop {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.pf-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px; border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.pf-head h3 { color: #fff; font-size: 0.98rem; font-weight: 700; }
+
+.pf-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.05); color: var(--gray);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s ease;
+}
+.pf-close:hover { background: rgba(255,107,107,0.18); color: #fff; transform: rotate(90deg); }
+
+.pf-body { padding: 16px; overflow-y: auto; }
+.pf-empty { color: var(--gray); font-size: 0.85rem; text-align: center; padding: 20px 0; }
+
+.pf-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+.pf-thumb {
+  position: relative; padding: 0; border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08); background: none;
+  transition: all 0.25s ease; aspect-ratio: 1;
+}
+.pf-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pf-thumb span {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 18px 10px 8px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  color: #fff; font-size: 0.72rem; font-weight: 600; text-align: left;
+}
+.pf-thumb:hover { border-color: var(--neon); box-shadow: 0 0 18px rgba(184,241,76,0.22); }
+
+.pf-lightbox {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.96);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 20px; z-index: 1100; animation: pmFade 0.2s ease-out;
+}
+.pf-lightbox img { max-width: 100%; max-height: 82vh; object-fit: contain; border-radius: 12px; }
+.pf-lightbox p { color: var(--gray); font-size: 0.85rem; }
+.pf-lightbox-close {
+  position: absolute; top: 18px; right: 18px; width: 42px; height: 42px; border-radius: 50%;
+  background: rgba(255,255,255,0.1); color: #fff;
+  display: flex; align-items: center; justify-content: center; transition: all 0.25s ease;
+}
+.pf-lightbox-close:hover { background: rgba(255,107,107,0.3); transform: rotate(90deg); }

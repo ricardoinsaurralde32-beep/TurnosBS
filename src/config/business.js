@@ -76,7 +76,7 @@ export const business = {
       ],
       // TODO: fotos del RINCÓN de Richard. Opcional, propias de él.
       workspacePhotos: [
-        { src: '/images/Richard.jpeg', caption: 'El espacio de Richard' }
+        { src: '/images/foto-local.jpeg', caption: 'El espacio de Richard' }
       ]
     },
     {

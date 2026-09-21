@@ -105,6 +105,108 @@ export const IconX = ({ size = 18 }) => (
   </svg>
 );
 
+export const IconSearch = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="7" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
+export const IconHome = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 11l9-8 9 8" />
+    <path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10" />
+  </svg>
+);
+
+export const IconList = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="8" y1="6" x2="21" y2="6" />
+    <line x1="8" y1="12" x2="21" y2="12" />
+    <line x1="8" y1="18" x2="21" y2="18" />
+    <line x1="3" y1="6" x2="3.01" y2="6" />
+    <line x1="3" y1="12" x2="3.01" y2="12" />
+    <line x1="3" y1="18" x2="3.01" y2="18" />
+  </svg>
+);
+
+export const IconScissors = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="6" cy="6" r="3" />
+    <circle cx="6" cy="18" r="3" />
+    <line x1="20" y1="4" x2="8.12" y2="15.88" />
+    <line x1="14.47" y1="14.48" x2="20" y2="20" />
+    <line x1="8.12" y1="8.12" x2="12" y2="12" />
+  </svg>
+);
+
+export const IconUser = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+export const IconQr = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7" />
+    <rect x="14" y="3" width="7" height="7" />
+    <rect x="3" y="14" width="7" height="7" />
+    <line x1="14" y1="14" x2="14" y2="17" />
+    <line x1="14" y1="20" x2="14" y2="20.01" />
+    <line x1="17" y1="14" x2="20" y2="14" />
+    <line x1="20" y1="17" x2="17" y2="17" />
+    <line x1="17" y1="20" x2="20" y2="20" />
+  </svg>
+);
+
+export const IconUsers = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+
+export const IconBuilding = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="1" />
+    <line x1="9" y1="7" x2="9" y2="7.01" />
+    <line x1="15" y1="7" x2="15" y2="7.01" />
+    <line x1="9" y1="11" x2="9" y2="11.01" />
+    <line x1="15" y1="11" x2="15" y2="11.01" />
+    <line x1="9" y1="15" x2="9" y2="15.01" />
+    <line x1="15" y1="15" x2="15" y2="15.01" />
+    <path d="M10 22v-4h4v4" />
+  </svg>
+);
+
+export const IconMore = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <circle cx="5" cy="12" r="2" />
+    <circle cx="12" cy="12" r="2" />
+    <circle cx="19" cy="12" r="2" />
+  </svg>
+);
+
+export const IconLogout = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+);
+
 /* Devuelve el ícono según el tipo de red */
 export const SocialIcon = ({ type, size = 22 }) => {
   const map = {
@@ -116,3 +218,24 @@ export const SocialIcon = ({ type, size = 22 }) => {
   const Cmp = map[type];
   return Cmp ? <Cmp size={size} /> : null;
 };
+
+export const IconGift = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="8" width="18" height="4" />
+    <rect x="4" y="12" width="16" height="9" />
+    <line x1="12" y1="8" x2="12" y2="21" />
+    <path d="M12 8c-1.5-4-6-4-6-1.2C6 8 8.5 8 12 8Z" />
+    <path d="M12 8c1.5-4 6-4 6-1.2C18 8 15.5 8 12 8Z" />
+  </svg>
+);
+
+export const IconHourglass = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 3h12" />
+    <path d="M6 21h12" />
+    <path d="M7 3c0 5 5 6 5 9s-5 4-5 9" />
+    <path d="M17 3c0 5-5 6-5 9s5 4 5 9" />
+  </svg>
+);

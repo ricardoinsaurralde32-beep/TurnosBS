@@ -1,0 +1,29 @@
+.rv-head { margin-bottom: 20px; }
+.rv-head h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+.rv-sub { color: var(--gray); font-size: 0.83rem; max-width: 480px; }
+
+.rv-empty { background-color: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 30px; text-align: center; color: var(--gray); }
+
+.rv-list { display: flex; flex-direction: column; gap: 12px; }
+
+.rv-card { background-color: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+.rv-card.approved { border-color: rgba(184,241,76,0.35); }
+
+.rv-stars { display: flex; gap: 3px; color: var(--neon); margin-bottom: 8px; }
+
+.rv-comment { color: #fff; font-size: 0.86rem; font-style: italic; line-height: 1.5; margin-bottom: 10px; }
+
+.rv-meta { display: flex; gap: 12px; color: var(--gray); font-size: 0.74rem; margin-bottom: 12px; }
+
+.rv-actions { display: flex; align-items: center; gap: 8px; }
+
+.rv-approve { padding: 7px 16px; border-radius: 999px; border: 1px solid var(--border); background: none; color: var(--gray); font-size: 0.76rem; font-weight: 700; transition: all 0.2s ease; }
+.rv-approve:hover { border-color: var(--neon); color: var(--neon); }
+.rv-approve.is-on { background-color: rgba(184,241,76,0.12); border-color: var(--neon); color: var(--neon); }
+
+.rv-remove { margin-left: auto; width: 28px; height: 28px; border-radius: 50%; background-color: rgba(255,255,255,0.05); color: var(--gray); display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+.rv-remove:hover { background-color: var(--danger); color: #fff; }
+
+@media (min-width: 900px) {
+  .rv-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+}

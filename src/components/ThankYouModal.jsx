@@ -1,19 +1,26 @@
 import { useState } from 'react';
-import { IconCheck, IconStar } from './Icons';
 import { business } from '../config/business';
-import { SocialIcon } from './Icons';
+import { IconCheck, IconStar, SocialIcon } from './Icons';
+import { insertReview } from '../lib/api';
 import './ThankYouModal.css';
 
 const MAX = 120;
 
-export default function ThankYouModal({ professional, date, time, services = [], email, onClose }) {
+export default function ThankYouModal({ professional, date, time, services = [], email, clientName, icsBase64, onClose }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [open, setOpen] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const send = () => {
-    // TODO: guardar rating + comment
+    const send = async () => {
+    // Se guarda como "no aprobada": el dueño la revisa en el panel antes de que se vea en la web
+    await insertReview({
+      professionalId: professional?.id,
+      professionalName: professional?.name,
+      rating,
+      comment,
+      clientName
+    });
     setSent(true);
     setOpen(false);
   };
@@ -33,7 +40,6 @@ export default function ThankYouModal({ professional, date, time, services = [],
         <h2 className="tm-title">Turno confirmado</h2>
         <p className="tm-sub">Gracias por confiar en nosotros</p>
 
-        {/* Ticket */}
         <div className="tm-ticket">
           <div className="tm-row">
             <span>Profesional</span>
@@ -59,9 +65,29 @@ export default function ThankYouModal({ professional, date, time, services = [],
               ? <>Te enviamos la confirmación a <b>{email}</b></>
               : <>Te avisamos por WhatsApp 24 h antes</>}
           </p>
+
+          {icsBase64 && (
+            <a
+              href={`data:text/calendar;charset=utf-8;base64,${icsBase64}`}
+              download="Turno-BarberStudio.ics"
+              style={{
+                display: 'block',
+                textAlign: 'center',
+                margin: '10px 0 2px',
+                padding: '10px 16px',
+                borderRadius: '999px',
+                border: '1px solid var(--neon)',
+                color: 'var(--neon)',
+                textDecoration: 'none',
+                fontWeight: 700,
+                fontSize: '0.78rem'
+              }}
+            >
+              📅 Agregar a mi calendario
+            </a>
+          )}
         </div>
 
-        {/* Valoración */}
         {!sent ? (
           <>
             <p className="tm-ask">¿Cómo fue tu experiencia reservando?</p>
@@ -94,7 +120,7 @@ export default function ThankYouModal({ professional, date, time, services = [],
           <p className="tm-thanks">¡Gracias por tu opinión!</p>
         )}
 
-                {business.socials?.length > 0 && (
+        {business.socials?.length > 0 && (
           <div className="tm-follow">
             <p>Seguinos y no te pierdas nada</p>
             <div className="tm-follow-links">

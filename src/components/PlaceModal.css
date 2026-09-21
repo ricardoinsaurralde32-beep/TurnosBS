@@ -187,3 +187,22 @@
   .pm-card { max-width: 520px; }
   .pm-map iframe { height: 300px; }
 }
+
+/* Arreglo: el botón de cerrar quedaba tapado con fotos muy altas en algunos celulares */
+.pm-lightbox {
+  position: fixed !important;
+  inset: 0 !important;
+}
+.pm-lightbox img {
+  max-height: 78dvh;
+  max-width: 92vw;
+  object-fit: contain;
+}
+.pm-lightbox-close {
+  position: fixed !important;
+  top: 16px !important;
+  right: 16px !important;
+  z-index: 2000 !important;
+  background-color: rgba(0,0,0,0.8) !important;
+  border: 1px solid rgba(255,255,255,0.3);
+}

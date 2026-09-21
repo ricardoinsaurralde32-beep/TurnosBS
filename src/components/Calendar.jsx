@@ -69,9 +69,10 @@ export default function Calendar({
         {cells.map((day, i) => {
           if (day === null) return <span key={`empty-${i}`} className="calendar-cell empty" />;
 
-          const date = new Date(year, monthIndex, day);
+                   const date = new Date(year, monthIndex, day);
           const state = getDayState(date);
-          const disabled = state !== 'available';
+          // Los días llenos SÍ se pueden tocar: ahí es donde aparece "anotarme en lista de espera"
+          const disabled = state === 'past' || state === 'closed';
 
           return (
             <button

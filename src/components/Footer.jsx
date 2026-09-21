@@ -1,9 +1,21 @@
-import { business } from '../config/business';
+import { useState, useEffect } from 'react';
 import { SocialIcon, IconMapPin, IconClock } from './Icons';
+import ManageBookingModal from './ManageBookingModal';
 import './Footer.css';
 
-export default function Footer() {
+export default function Footer({ business }) {
   const year = new Date().getFullYear();
+  const [manageOpen, setManageOpen] = useState(false);
+  const [initialCode, setInitialCode] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('turno');
+    if (code) {
+      setInitialCode(code);
+      setManageOpen(true);
+    }
+  }, []);
 
   return (
     <footer className="ft">
@@ -11,28 +23,23 @@ export default function Footer() {
 
       <div className="ft-grid">
 
-        {/* Marca */}
         <div className="ft-col ft-brand">
           <img src={business.logo} alt={business.name} className="ft-logo" />
           <p className="ft-tagline">{business.tagline}</p>
 
           <div className="ft-socials">
             {business.socials.map((s) => (
-              <a
-                key={s.type}
-                href={s.url}
-                target="_blank"
-                rel="noreferrer"
-                className={`ft-social ft-${s.type}`}
-                aria-label={s.label}
-              >
+              <a key={s.type} href={s.url} target="_blank" rel="noreferrer" className={`ft-social ft-${s.type}`} aria-label={s.label}>
                 <SocialIcon type={s.type} size={20} />
               </a>
             ))}
           </div>
+
+          <button type="button" className="ft-manage-btn" onClick={() => setManageOpen(true)}>
+            Gestioná tu turno
+          </button>
         </div>
 
-        {/* Equipo */}
         <div className="ft-col">
           <h4 className="ft-head">Nuestro equipo</h4>
 
@@ -44,13 +51,7 @@ export default function Footer() {
               </div>
               <div className="ft-person-links">
                 {(pro.socials || []).map((s) => (
-                  <a
-                    key={s.type}
-                    href={s.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`ft-mini ft-${s.type}`}
-                  >
+                  <a key={s.type} href={s.url} target="_blank" rel="noreferrer" className={`ft-mini ft-${s.type}`}>
                     <SocialIcon type={s.type} size={14} />
                     <span>{s.label}</span>
                   </a>
@@ -60,19 +61,18 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Contacto */}
         <div className="ft-col">
           <h4 className="ft-head">Dónde estamos</h4>
 
           <a href={business.mapsUrl} target="_blank" rel="noreferrer" className="ft-info ft-info-link">
             <IconMapPin />
-                        <span>
+            <span>
               {business.address}
               {business.addressDetail && <em>{business.addressDetail}</em>}
             </span>
           </a>
 
-                    <div className="ft-info">
+          <div className="ft-info">
             <IconClock />
             <div className="ft-hours">
               {business.hoursText.map((line, i) => <span key={i}>{line}</span>)}
@@ -96,6 +96,14 @@ export default function Footer() {
           </a>
         </div>
       </div>
+
+      {manageOpen && (
+        <ManageBookingModal
+          business={business}
+          initialCode={initialCode}
+          onClose={() => { setManageOpen(false); setInitialCode(null); }}
+        />
+      )}
     </footer>
   );
 }

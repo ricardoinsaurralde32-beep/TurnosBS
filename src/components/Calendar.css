@@ -96,13 +96,16 @@
   cursor: not-allowed;
 }
 
-/* Sin turnos libres */
+/* Sin turnos libres, pero se puede tocar para anotarse en lista de espera */
 .calendar-cell.is-full {
   background-color: var(--gray-darker);
-  color: #6b6b6b;
-  cursor: not-allowed;
+  color: #9a9a9a;
+  cursor: pointer;
 }
-
+.calendar-cell.is-full:hover {
+  background-color: #333;
+  color: #fff;
+}
 /* Seleccionado */
 .calendar-cell.is-selected {
   background-color: var(--neon);

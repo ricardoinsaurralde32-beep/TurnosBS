@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { business } from '../config/business';
 import { IconX, IconMapPin, IconImage } from './Icons';
 import './PlaceModal.css';
 
-export default function PlaceModal({ initialTab = 'map', professional, onClose }) {
+export default function PlaceModal({ business, initialTab = 'map', professional, onClose }) {
   const [tab, setTab] = useState(initialTab);
   const [lightbox, setLightbox] = useState(null);
 

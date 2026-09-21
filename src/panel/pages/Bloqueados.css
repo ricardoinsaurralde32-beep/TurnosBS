@@ -1,0 +1,83 @@
+.bl-head { margin-bottom: 20px; }
+.bl-head h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+.bl-sub { color: var(--gray); font-size: 0.83rem; }
+
+.bl-form {
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.bl-form-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+
+.bl-form-grid input {
+  background-color: var(--black);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 13px;
+  color: #fff;
+  font-size: 0.86rem;
+  outline: none;
+}
+.bl-form-grid input:focus { border-color: var(--neon); }
+
+.bl-error { color: var(--danger); font-size: 0.8rem; margin-bottom: 10px; }
+
+.bl-add-btn {
+  padding: 10px 22px;
+  background-color: var(--danger);
+  color: #fff;
+  font-weight: 800;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  transition: all 0.2s ease;
+}
+.bl-add-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(255,107,107,0.35); }
+
+.bl-empty {
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 30px;
+  text-align: center;
+  color: var(--gray);
+}
+
+.bl-list { display: flex; flex-direction: column; gap: 10px; }
+
+.bl-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--danger);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.bl-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bl-name { color: #fff; font-weight: 700; font-size: 0.88rem; }
+.bl-phone { color: var(--gray); font-size: 0.78rem; }
+.bl-reason { color: #666; font-size: 0.74rem; font-style: italic; }
+
+.bl-unblock {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--gray);
+  font-size: 0.76rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+.bl-unblock:hover { border-color: var(--neon); color: var(--neon); }
+
+@media (min-width: 900px) {
+  .bl-form-grid { flex-direction: row; }
+  .bl-form-grid input { flex: 1; }
+}
