@@ -2,11 +2,26 @@ import { useState, useEffect, useMemo } from 'react';
 import { business } from '../../config/business';
 import { fetchBookings, updateBookingStatus } from '../../lib/api';
 import { downloadCsv } from '../../utils/csvExport';
-import { IconSearch, IconCheck, IconX } from '../../components/Icons';
+import { IconSearch, IconCheck, IconX, IconCamera } from '../../components/Icons';
 import CancelBookingModal from '../CancelBookingModal';
 import './Turnos.css';
 
 const STATUS_LABEL = { pending: 'Pendiente', done: 'Atendido', noshow: 'No vino', cancelled: 'Cancelado' };
+
+// El turno arranca "Atendido" solo en la base para no tener que aprobarlo a mano,
+// pero no tiene sentido mostrar "Atendido" antes de que pase el horario.
+// Mostramos "Confirmado" hasta que pase al menos 1 hora desde la hora del turno.
+function displayStatus(b) {
+  if (b.status === 'cancelled') return { label: 'Cancelado', cls: 'cancelled' };
+  if (b.status === 'noshow') return { label: 'No vino', cls: 'noshow' };
+
+  const [h, m] = b.time.split(':').map(Number);
+  const bookingDate = new Date(`${b.date}T00:00:00`);
+  bookingDate.setHours(h, m + 60, 0, 0);
+
+  if (new Date() < bookingDate) return { label: 'Confirmado', cls: 'pending' };
+  return { label: 'Atendido', cls: 'done' };
+}
 const LOYALTY_THRESHOLD = 3;
 
 function serviceLabels(ids) {
@@ -20,6 +35,7 @@ export default function Turnos() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [proFilter, setProFilter] = useState('all');
   const [cancelTarget, setCancelTarget] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -133,15 +149,34 @@ export default function Turnos() {
                         {b.professionals?.name && <span className="tn-pro-badge">{b.professionals.name}</span>}
                       </div>
                       <p className="tn-services">{serviceLabels(b.services)}</p>
+                      {b.reference_photo_url && (
+                        <button
+                          type="button"
+                          className="tn-photo-btn"
+                          onClick={() => setPhotoPreview(b.reference_photo_url)}
+                        >
+                          <IconCamera size={12} />
+                          Ver foto de referencia
+                        </button>
+                      )}
                       <p className="tn-phone">
-                        {b.client_phone} · {visits} visita{visits !== 1 ? 's' : ''} completada{visits !== 1 ? 's' : ''}
+                        <a
+                          href={`https://wa.me/${b.client_phone.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="tn-phone-link"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {b.client_phone}
+                        </a>
+                        {' '}· {visits} visita{visits !== 1 ? 's' : ''} completada{visits !== 1 ? 's' : ''}
                       </p>
                     </div>
 
                     <div className="tn-side">
                       <span className="tn-date">{b.date.split('-').reverse().slice(0, 2).join('/')}</span>
                       <span className="tn-time">{b.time}</span>
-                      <span className={`tn-status tn-status-${b.status}`}>{STATUS_LABEL[b.status]}</span>
+                      <span className={`tn-status tn-status-${displayStatus(b).cls}`}>{displayStatus(b).label}</span>
 
                       {b.status !== 'cancelled' && (
                         b.status === 'noshow' ? (
@@ -168,6 +203,17 @@ export default function Turnos() {
 
       {cancelTarget && (
         <CancelBookingModal booking={cancelTarget} onConfirm={handleConfirmCancel} onClose={() => setCancelTarget(null)} />
+      )}
+
+      {photoPreview && (
+        <div className="tn-photo-overlay" onClick={() => setPhotoPreview(null)}>
+          <div className="tn-photo-inner" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="tn-photo-close" onClick={() => setPhotoPreview(null)} aria-label="Cerrar">
+              <IconX size={16} />
+            </button>
+            <img src={photoPreview} alt="Foto de referencia" />
+          </div>
+        </div>
       )}
     </div>
   );

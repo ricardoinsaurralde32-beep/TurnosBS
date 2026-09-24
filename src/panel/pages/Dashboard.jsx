@@ -31,6 +31,12 @@ const RANGES = {
   month: { label: 'Mes',    from: startOfMonth, to: endOfMonth }
 };
 
+// Devuelve [desde, hasta] en ISO para el rango elegido, calculado desde hoy
+function rangeBounds(range) {
+  const now = new Date();
+  return [toISO(RANGES[range].from(now)), toISO(RANGES[range].to(now))];
+}
+
 function serviceLabel(id) {
   return business.services.find((s) => s.id === id)?.label || id;
 }
@@ -64,8 +70,7 @@ export default function Dashboard() {
 
   const hasPrices = Object.keys(priceMap).length > 0;
 
-  const rangeFrom = toISO(RANGES[range].from(today));
-  const rangeTo = toISO(RANGES[range].to(today));
+  const [rangeFrom, rangeTo] = rangeBounds(range);
 
   const inRange = useMemo(
     () => bookings.filter((b) => b.date >= rangeFrom && b.date <= rangeTo && b.status !== 'cancelled'),

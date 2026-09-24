@@ -210,14 +210,6 @@
   .pnl-main { padding: 26px 30px; }
 }
 
-.pnl-loading {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--gray);
-  font-size: 0.9rem;
-}
 
 .pnl-home-link {
   display: block;

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Landing from './components/Landing';
+import BajaRecordatorios from './components/BajaRecordatorios';
 import { PanelAuthProvider, usePanelAuth } from './panel/PanelAuthContext';
 import PanelLogin from './panel/PanelLogin';
 import PanelLayout from './panel/PanelLayout';
@@ -70,6 +71,7 @@ export default function App() {
       <PanelAuthProvider>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/baja" element={<BajaRecordatorios />} />
           <Route path="/panel/*" element={<PanelRoutes />} />
         </Routes>
       </PanelAuthProvider>

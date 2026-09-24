@@ -1,21 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { SocialIcon, IconMapPin, IconClock } from './Icons';
 import ManageBookingModal from './ManageBookingModal';
 import './Footer.css';
 
 export default function Footer({ business }) {
   const year = new Date().getFullYear();
-  const [manageOpen, setManageOpen] = useState(false);
-  const [initialCode, setInitialCode] = useState(null);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('turno');
-    if (code) {
-      setInitialCode(code);
-      setManageOpen(true);
-    }
-  }, []);
+  // Si el link trae ?turno=CODIGO, el modal de "gestionar turno" arranca abierto con ese código
+  const [initialCode, setInitialCode] = useState(() => new URLSearchParams(window.location.search).get('turno'));
+  const [manageOpen, setManageOpen] = useState(() => Boolean(initialCode));
 
   return (
     <footer className="ft">

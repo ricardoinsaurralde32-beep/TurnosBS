@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { usePanelAuth } from '../PanelAuthContext';
 import { business } from '../../config/business';
 import { fetchBookings, updateBookingStatus } from '../../lib/api';
-import { IconCheck, IconX } from '../../components/Icons';
+import { IconCheck, IconX, IconCamera } from '../../components/Icons';
 import CancelBookingModal from '../CancelBookingModal';
 import './AgendaHoy.css';
 
@@ -19,16 +19,18 @@ export default function AgendaHoy() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelTarget, setCancelTarget] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const today = todayISO();
 
-  const load = async () => {
-    setLoading(true);
-    const { data } = await fetchBookings({ from: today, to: today });
-    setBookings(data);
-    setLoading(false);
-  };
-
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    let active = true;
+    fetchBookings({ from: today, to: today }).then(({ data }) => {
+      if (!active) return;
+      setBookings(data);
+      setLoading(false);
+    });
+    return () => { active = false; };
+  }, [today]);
 
   const updateStatus = async (id, status) => {
     setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
@@ -67,6 +69,16 @@ export default function AgendaHoy() {
                   )}
                 </p>
                 <p className="ah-services">{serviceLabels(b.services)}</p>
+                {b.reference_photo_url && (
+                  <button
+                    type="button"
+                    className="ah-photo-btn"
+                    onClick={() => setPhotoPreview(b.reference_photo_url)}
+                  >
+                    <IconCamera size={12} />
+                    Ver foto de referencia
+                  </button>
+                )}
               </div>
 
               {b.status === 'cancelled' ? (
@@ -93,6 +105,17 @@ export default function AgendaHoy() {
 
       {cancelTarget && (
         <CancelBookingModal booking={cancelTarget} onConfirm={handleConfirmCancel} onClose={() => setCancelTarget(null)} />
+      )}
+
+      {photoPreview && (
+        <div className="ah-photo-overlay" onClick={() => setPhotoPreview(null)}>
+          <div className="ah-photo-inner" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="ah-photo-close" onClick={() => setPhotoPreview(null)} aria-label="Cerrar">
+              <IconX size={16} />
+            </button>
+            <img src={photoPreview} alt="Foto de referencia" />
+          </div>
+        </div>
       )}
     </div>
   );

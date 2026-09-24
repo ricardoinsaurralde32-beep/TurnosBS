@@ -52,24 +52,28 @@ export default function Excepciones() {
     setTimeout(() => setFlash(''), 1600);
   };
 
-  const loadAll = async () => {
-    setLoading(true);
-    const map = await fetchBlockedSlotsMap(session.professionalId);
-    setFullMap(map);
-    setLoading(false);
-  };
+  useEffect(() => {
+    let active = true;
+    fetchBlockedSlotsMap(session.professionalId).then((map) => {
+      if (!active) return;
+      setFullMap(map);
+      setLoading(false);
+    });
+    return () => { active = false; };
+  }, [session.professionalId]);
 
-  const loadBookingsForDate = async (d) => {
-    const { data: bookings } = await fetchBookings({ from: d, to: d });
-    const map = {};
-    (bookings || [])
-      .filter((b) => b.professional_id === session.professionalId)
-      .forEach((b) => { map[b.time] = b; });
-    setBookedByTime(map);
-  };
-
-  useEffect(() => { loadAll(); }, [session.professionalId]);
-  useEffect(() => { loadBookingsForDate(date); }, [date]);
+  useEffect(() => {
+    let active = true;
+    fetchBookings({ from: date, to: date }).then(({ data: bookings }) => {
+      if (!active) return;
+      const map = {};
+      (bookings || [])
+        .filter((b) => b.professional_id === session.professionalId)
+        .forEach((b) => { map[b.time] = b; });
+      setBookedByTime(map);
+    });
+    return () => { active = false; };
+  }, [date, session.professionalId]);
 
   const blocked = fullMap[date] || [];
   const slots = pro ? baseSlots(pro, keyToDate(date)) : [];

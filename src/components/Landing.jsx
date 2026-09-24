@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Calendar from './Calendar';
 import ThankYouModal from './ThankYouModal';
 import PlaceModal from './PlaceModal';
@@ -36,6 +36,14 @@ const toMin = (hhmm) => {
 const toHHMM = (mins) =>
   `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
 
+// Limpia texto que escribe el cliente antes de meterlo en el HTML de un mail
+const escapeHtml = (s) =>
+  String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
 /* ---- Armado del archivo .ics (invitación de calendario) ---- */
 const pad2 = (n) => String(n).padStart(2, '0');
 
@@ -46,6 +54,9 @@ const toIcsUtcNow = () => {
   const d = new Date();
   return `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}T${pad2(d.getUTCHours())}${pad2(d.getUTCMinutes())}${pad2(d.getUTCSeconds())}Z`;
 };
+
+// El valor de CN va entre comillas para que un ":" o un ";" en el nombre no rompa el archivo
+const icsCn = (s) => `"${String(s ?? '').replace(/["\r\n]/g, '')}"`;
 
 // Convierte a base64 sin romperse con tildes/ñ (Brevo necesita el adjunto en base64)
 const base64Utf8 = (str) => btoa(unescape(encodeURIComponent(str)));
@@ -68,10 +79,10 @@ function buildBookingIcs({ code, businessName, address, professionalName, servic
     `SUMMARY:Turno en ${businessName} con ${professionalName}`,
     `DESCRIPTION:Servicios: ${serviceNames} - Codigo: ${code}`,
     `LOCATION:${address || ''}`,
-    `ORGANIZER;CN=${businessName}:mailto:ricardoinsaurralde32@gmail.com`
+    `ORGANIZER;CN=${icsCn(businessName)}:mailto:ricardoinsaurralde32@gmail.com`
   ];
   if (attendeeEmail) {
-    lines.push(`ATTENDEE;CN=${attendeeName || attendeeEmail};RSVP=TRUE:mailto:${attendeeEmail}`);
+    lines.push(`ATTENDEE;CN=${icsCn(attendeeName || attendeeEmail)};RSVP=TRUE:mailto:${attendeeEmail}`);
   }
   lines.push(
     'BEGIN:VALARM',
@@ -122,7 +133,10 @@ export default function Landing() {
   const [placeTab, setPlaceTab] = useState(null);
   const [linkWarning, setLinkWarning] = useState('');
   const [glowSlot, setGlowSlot] = useState(-1);
-  const [urlHandled, setUrlHandled] = useState(false);
+  const [ripple, setRipple] = useState(null);
+  const slotGridRef = useRef(null);
+  const rippleTimerRef = useRef(null);
+  const urlHandledRef = useRef(false);
 
   const [waitlistOpen, setWaitlistOpen] = useState(false);
   const [waitlistDone, setWaitlistDone] = useState(false);
@@ -238,8 +252,8 @@ export default function Landing() {
 
   /* ---------- Resuelve ?prof=&date=&quick= una sola vez ---------- */
   useEffect(() => {
-    if (!businessData || urlHandled) return;
-    setUrlHandled(true);
+    if (!businessData || urlHandledRef.current) return;
+    urlHandledRef.current = true;
 
     const params = new URLSearchParams(window.location.search);
     const slug = params.get('prof');
@@ -306,19 +320,40 @@ export default function Landing() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [businessData, urlHandled]);
+  }, [businessData]);
 
   const slots = professional && selectedDate ? availableSlots(professional, selectedDate) : [];
   const slotCount = slots.length;
   const currentKey = selectedDate ? dateKey(selectedDate) : '';
 
+  /* Onda expansiva: sale del horario `origin` y recorre la grilla por distancia.
+     Alterna entre dos clases (a/b) para que una onda nueva reinicie la animación. */
+  const fireRipple = useCallback((origin) => {
+    const btns = slotGridRef.current?.children;
+    if (!btns?.[origin]) return;
+    const o = btns[origin].getBoundingClientRect();
+    // Distancia en "celdas" de la grilla (los botones son más anchos que altos)
+    const dists = Array.from(btns, (el) => {
+      const r = el.getBoundingClientRect();
+      return Math.round(Math.hypot((r.left - o.left) / o.width, (r.top - o.top) / (o.height * 1.3)));
+    });
+    setRipple((prev) => ({ dists, cls: prev?.cls === 'ripple-a' ? 'ripple-b' : 'ripple-a' }));
+    clearTimeout(rippleTimerRef.current);
+    rippleTimerRef.current = setTimeout(() => setRipple(null), Math.max(...dists) * 110 + 700);
+  }, []);
+
+  useEffect(() => () => clearTimeout(rippleTimerRef.current), []);
+
   useEffect(() => {
-    if (slotCount === 0) {
-      setGlowSlot(-1);
-      return;
-    }
+    if (slotCount === 0) return;
     let timer;
     const cycle = () => {
+      // Más de la mitad de las veces, en vez del brillo suelto sale una onda desde un horario al azar
+      if (slotCount > 3 && Math.random() < 0.55) {
+        fireRipple(Math.floor(Math.random() * slotCount));
+        timer = setTimeout(cycle, 1500 + Math.random() * 1200);
+        return;
+      }
       setGlowSlot(Math.floor(Math.random() * slotCount));
       const encendido = 400 + Math.random() * 900;
       timer = setTimeout(() => {
@@ -327,9 +362,19 @@ export default function Landing() {
         timer = setTimeout(cycle, apagado);
       }, encendido);
     };
-    timer = setTimeout(cycle, 600);
-    return () => clearTimeout(timer);
-  }, [slotCount, currentKey]);
+    // Apenas terminan de entrar los horarios del día elegido, sale la primera onda
+    // desde el primer horario; después sigue el ciclo normal.
+    const entrada = (slotCount - 1) * 70 + 620;
+    timer = setTimeout(() => {
+      if (slotCount > 1) fireRipple(0);
+      timer = setTimeout(cycle, 1600);
+    }, entrada);
+    return () => {
+      clearTimeout(timer);
+      setGlowSlot(-1);
+      setRipple(null);
+    };
+  }, [slotCount, currentKey, fireRipple]);
 
   const getDayState = (date) => dayState(professional, date);
 
@@ -574,7 +619,7 @@ export default function Landing() {
 
                   <tr>
                     <td style="padding:14px 4px 0; font-size:15px; color:#333333; line-height:1.55;">
-                      Hola <strong>${form.name.trim()}</strong>, te esperamos con <strong>${professional.name}</strong>.
+                      Hola <strong>${escapeHtml(form.name.trim())}</strong>, te esperamos con <strong>${professional.name}</strong>.
                     </td>
                   </tr>
 
@@ -582,7 +627,7 @@ export default function Landing() {
                     <td style="padding:18px 4px 0; font-size:14px; color:#444444; line-height:1.9;">
                       📅 <strong style="color:#111111;">${dateLabel}</strong><br/>
                       🕒 <strong style="color:#111111;">${selectedTime}</strong><br/>
-                      ✂️ <strong style="color:#111111;">${serviceNames}</strong>
+                      ✂️ <strong style="color:#111111;">${escapeHtml(serviceNames)}</strong>
                     </td>
                   </tr>
 
@@ -692,11 +737,11 @@ export default function Landing() {
 
                   <tr>
                     <td style="padding:18px 4px 0; font-size:14px; color:#444444; line-height:1.9;">
-                      🙋 <strong style="color:#111111;">${form.name.trim()}</strong><br/>
-                      📱 <strong style="color:#111111;">${form.phone.trim()}</strong><br/>
+                      🙋 <strong style="color:#111111;">${escapeHtml(form.name.trim())}</strong><br/>
+                      📱 <strong style="color:#111111;">${escapeHtml(form.phone.trim())}</strong><br/>
                       📅 <strong style="color:#111111;">${dateLabelOwner}</strong><br/>
                       🕒 <strong style="color:#111111;">${selectedTime}</strong><br/>
-                      ✂️ <strong style="color:#111111;">${serviceNamesOwner}</strong>
+                      ✂️ <strong style="color:#111111;">${escapeHtml(serviceNamesOwner)}</strong>
                     </td>
                   </tr>
 
@@ -751,7 +796,7 @@ export default function Landing() {
   if (!businessData) {
     return (
       <div className="page-loading">
-        <p>{loadError || 'Cargando...'}</p>
+        <p className={loadError ? 'is-error' : undefined}>{loadError || 'Cargando...'}</p>
       </div>
     );
   }
@@ -902,13 +947,13 @@ export default function Landing() {
               </p>
 
               {slots.length > 0 ? (
-                <div className="slot-grid" key={currentKey}>
+                <div className="slot-grid" key={currentKey} ref={slotGridRef}>
                   {slots.map((time, i) => (
                     <button
                       key={time}
-                      className={`slot ${selectedTime === time ? 'active' : ''} ${glowSlot === i ? 'glow' : ''}`}
-                      style={{ animationDelay: `${i * 70}ms` }}
-                      onClick={() => handleSelectTime(time)}
+                      className={`slot ${selectedTime === time ? 'active' : ''} ${glowSlot === i ? 'glow' : ''} ${ripple ? ripple.cls : ''}`}
+                      style={{ animationDelay: `${i * 70}ms`, '--rd': ripple?.dists[i] ?? 0 }}
+                      onClick={() => { fireRipple(i); handleSelectTime(time); }}
                     >
                       {time}
                     </button>
@@ -983,6 +1028,9 @@ export default function Landing() {
 
             <div className="field">
               <label htmlFor="email">Correo (opcional)</label>
+              <p className="field-hint">
+                Dejá tu correo y te avisamos 2 horas y 30 minutos antes de tu turno.
+              </p>
               <input id="email" name="email" type="email" value={form.email} onChange={handleChange} />
             </div>
 

@@ -92,8 +92,6 @@
   .ah-time { font-size: 0.95rem; min-width: 54px; }
 }
 
-.ah-loading { color: var(--gray); font-size: 0.85rem; }
-
 .ah-status-noshow { color: var(--danger); font-weight: 700; }
 
 .ah-status-noshow { color: var(--danger); font-weight: 700; }
@@ -104,3 +102,43 @@
   text-decoration: underline; padding: 2px 0;
 }
 .ah-cancel-link:hover { color: var(--danger); }
+.ah-photo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 0 2px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(184,241,76,0.35);
+  background-color: rgba(184,241,76,0.08);
+  color: var(--neon);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.ah-photo-btn:hover { background-color: rgba(184,241,76,0.16); }
+
+.ah-photo-overlay {
+  position: fixed; inset: 0;
+  background-color: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  z-index: 999;
+}
+.ah-photo-inner { position: relative; max-width: 100%; max-height: 100%; }
+.ah-photo-inner img {
+  display: block;
+  max-width: 100%; max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 0 40px rgba(184,241,76,0.15);
+}
+.ah-photo-close {
+  position: absolute;
+  top: -14px; right: -14px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background-color: var(--neon);
+  color: #0a0a0a;
+  border: 2px solid #0a0a0a;
+}
+.ah-photo-close:hover { transform: scale(1.08); }

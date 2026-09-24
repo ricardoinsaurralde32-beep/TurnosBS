@@ -92,6 +92,13 @@
 
 .tn-services { color: var(--gray); font-size: 0.78rem; margin-bottom: 3px; }
 .tn-phone { color: #666; font-size: 0.72rem; }
+.tn-phone-link {
+  color: #25d366;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.tn-phone-link:hover { color: #33e879; }
 
 .tn-side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
 .tn-date { color: #fff; font-size: 0.78rem; font-weight: 600; }
@@ -101,6 +108,7 @@
 .tn-status-pending { color: var(--neon); }
 .tn-status-done { color: #4ade80; }
 .tn-status-noshow { color: var(--danger); }
+.tn-status-cancelled { color: #666; text-decoration: line-through; }
 
 @media (min-width: 900px) {
   .tn-filters { flex-direction: row; }
@@ -122,3 +130,43 @@
 
 .tn-cancel-link { background: none; color: #666; font-size: 0.66rem; font-weight: 600; text-decoration: underline; }
 .tn-cancel-link:hover { color: var(--danger); }
+.tn-photo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 0 7PX;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(184,241,76,0.35);
+  background-color: rgba(184,241,76,0.08);
+  color: var(--neon);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.tn-photo-btn:hover { background-color: rgba(184,241,76,0.16); }
+
+.tn-photo-overlay {
+  position: fixed; inset: 0;
+  background-color: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  z-index: 999;
+}
+.tn-photo-inner { position: relative; max-width: 100%; max-height: 100%; }
+.tn-photo-inner img {
+  display: block;
+  max-width: 100%; max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 0 40px rgba(184,241,76,0.15);
+}
+.tn-photo-close {
+  position: absolute;
+  top: -14px; right: -14px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background-color: var(--neon);
+  color: #0a0a0a;
+  border: 2px solid #0a0a0a;
+}
+.tn-photo-close:hover { transform: scale(1.08); }

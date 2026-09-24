@@ -67,6 +67,74 @@ a { text-decoration: none; }
 
 .fade-up { animation: fadeUp 0.55s ease-out both; }
 
+/* ---------- Spinner de carga (CSS puro, sin JS ni imágenes) ----------
+   Se dibuja solo arriba de cualquier texto "Cargando..." de la landing y el panel:
+   ::after = halo de brillo que respira, ::before = arco que gira encima del halo. */
+.page-loading p, .pnl-loading, .ah-loading {
+  --sp: clamp(42px, 3vw + 28px, 60px);
+  --sp-gap: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-gap);
+  margin: 0;
+  text-align: center;
+  color: var(--gray);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  animation: loadingText 1.6s ease-in-out infinite;
+}
+.pnl-loading { min-height: 100vh; min-height: 100dvh; }
+.ah-loading  { min-height: 55vh;  min-height: 55dvh; }
+
+.page-loading p::after, .pnl-loading::after, .ah-loading::after {
+  content: '';
+  order: -1;
+  width: var(--sp);
+  height: var(--sp);
+  border-radius: 50%;
+  box-shadow: 0 0 28px 2px var(--neon-soft), inset 0 0 14px var(--neon-dim);
+  animation: loadingGlow 1.6s ease-in-out infinite;
+}
+.page-loading p::before, .pnl-loading::before, .ah-loading::before {
+  content: '';
+  width: var(--sp);
+  height: var(--sp);
+  margin-top: calc(-1 * (var(--sp) + var(--sp-gap)));
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 1.5px, #eaffc2 0 1.5px, transparent 2.2px),
+    conic-gradient(from 0deg, transparent 0 8%, rgba(184,241,76,0.12) 30%, var(--neon));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+  animation: spin 0.75s linear infinite;
+}
+
+/* Si la landing no pudo cargar, se muestra el error sin spinner */
+.page-loading p.is-error {
+  padding: 0 16px;
+  font-size: 0.9rem;
+  letter-spacing: normal;
+  text-transform: none;
+  animation: none;
+}
+.page-loading p.is-error::before, .page-loading p.is-error::after { display: none; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes loadingGlow {
+  0%, 100% { opacity: 0.35; transform: scale(0.94); }
+  50%      { opacity: 1;    transform: scale(1); }
+}
+@keyframes loadingText {
+  0%, 100% { color: var(--gray); }
+  50%      { color: #e8e8e8; }
+}
+
 /* Respeta "reducir movimiento" del sistema: apaga animaciones para
    quien lo tenga activado (accesibilidad + ahorro de batería) */
 @media (prefers-reduced-motion: reduce) {
@@ -75,5 +143,10 @@ a { text-decoration: none; }
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+  /* El spinner sigue girando (más lento): quieto parecería que la página se colgó */
+  .page-loading p::before, .pnl-loading::before, .ah-loading::before {
+    animation-duration: 1.6s !important;
+    animation-iteration-count: infinite !important;
   }
 }

@@ -8,7 +8,7 @@ export default function ManageBookingModal({ business, initialCode, onClose }) {
   const [code, setCode] = useState(initialCode || '');
   const [booking, setBooking] = useState(null);
   const [notFound, setNotFound] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(initialCode));
   const [canceling, setCanceling] = useState(false);
   const [cancelled, setCancelled] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -25,10 +25,18 @@ export default function ManageBookingModal({ business, initialCode, onClose }) {
     else setNotFound(true);
   };
 
+  // Si se abrió con un código desde el link, lo busca solo
   useEffect(() => {
-    if (initialCode) handleSearch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialCode]);
+    if (!initialCode?.trim()) return;
+    let active = true;
+    findBookingByCode(business.id, initialCode.trim()).then(({ data }) => {
+      if (!active) return;
+      setLoading(false);
+      if (data) setBooking(data);
+      else setNotFound(true);
+    });
+    return () => { active = false; };
+  }, [initialCode, business.id]);
 
   const handleCancel = async () => {
     setCanceling(true);

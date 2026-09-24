@@ -75,6 +75,8 @@ export function PanelAuthProvider({ children }) {
   );
 }
 
+// El hook vive junto al provider a propósito; solo afecta la recarga en caliente en desarrollo
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePanelAuth() {
   const ctx = useContext(PanelAuthContext);
   if (!ctx) throw new Error('usePanelAuth debe usarse dentro de PanelAuthProvider');

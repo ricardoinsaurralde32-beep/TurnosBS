@@ -71,7 +71,7 @@
 .hero-body {
   position: relative;
   text-align: center;
-  padding: 44px 22px 60px;
+  padding: 30px 22px 60px;
   overflow: hidden;
 }
 
@@ -83,11 +83,12 @@
 }
 
 .hero-tagline {
-  font-family: 'Syne Mono', monospace;
+  font-family: 'Inter', system-ui, sans-serif;
   font-weight: 400;
-  font-size: clamp(1.15rem, 4.6vw, 1.55rem);
-  line-height: 1.55;
-  max-width: 440px;
+  font-size: clamp(0.95rem, 3.4vw, 1.12rem);
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  max-width: 400px;
   margin: 0 auto 22px;
   color: var(--white);
   text-shadow: 0 0 18px rgba(184,241,76,0.22);
@@ -361,6 +362,48 @@
   box-shadow: 0 0 26px var(--neon-soft); transform: translateY(-3px);
 }
 .slot.active { background-color: var(--neon); color: #0a0a0a; box-shadow: 0 0 32px var(--neon); }
+
+/* ===== Onda expansiva neón =====
+   Sale de un horario y recorre la grilla: cada botón destella (::before, debajo del texto)
+   y larga un anillo de luz que se agranda (::after). --rd = distancia al origen.
+   Va en pseudo-elementos para no pisar la animación de entrada del botón. */
+.slot { position: relative; isolation: isolate; }
+.slot.ripple-a::before, .slot.ripple-b::before,
+.slot.ripple-a::after,  .slot.ripple-b::after {
+  content: '';
+  position: absolute;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+}
+.slot.ripple-a::before, .slot.ripple-b::before {
+  inset: 0;
+  z-index: -1;
+  background-color: var(--neon);
+}
+.slot.ripple-a::after, .slot.ripple-b::after {
+  inset: -2px;
+  border: 2px solid var(--neon);
+  box-shadow: 0 0 18px var(--neon), inset 0 0 10px var(--neon-soft);
+}
+.slot.ripple-a::before { animation: rippleFillA 0.45s ease-out calc(var(--rd) * 110ms) both; }
+.slot.ripple-b::before { animation: rippleFillB 0.45s ease-out calc(var(--rd) * 110ms) both; }
+.slot.ripple-a::after  { animation: rippleRingA 0.55s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--rd) * 110ms) both; }
+.slot.ripple-b::after  { animation: rippleRingB 0.55s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--rd) * 110ms) both; }
+
+/* A y B son idénticas: cambiar de nombre reinicia la animación si llega otra onda */
+@keyframes rippleFillA { 0% { opacity: 0; } 25% { opacity: 0.4; } 100% { opacity: 0; } }
+@keyframes rippleFillB { 0% { opacity: 0; } 25% { opacity: 0.4; } 100% { opacity: 0; } }
+@keyframes rippleRingA {
+  0%   { opacity: 0; transform: scale(1); }
+  20%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.07, 1.3); }
+}
+@keyframes rippleRingB {
+  0%   { opacity: 0; transform: scale(1); }
+  20%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.07, 1.3); }
+}
 
 /* ================= ALERTA ================= */
 .alert {
@@ -677,3 +720,11 @@
 }
 .total-box span { color: var(--gray); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
 .total-box strong { color: var(--neon); font-size: 1.05rem; font-weight: 800; }
+.page-loading {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0a0a0a;
+}

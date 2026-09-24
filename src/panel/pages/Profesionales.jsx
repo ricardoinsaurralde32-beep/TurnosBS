@@ -34,22 +34,23 @@ export default function Profesionales() {
   const [accessError, setAccessError] = useState('');
   const [accessOk, setAccessOk] = useState('');
 
-  const load = async () => {
-    setLoading(true);
-    const [{ data: pros }, { data: cat }, { data: staffRows }] = await Promise.all([
+  useEffect(() => {
+    let active = true;
+    Promise.all([
       fetchAllProfessionals(session.businessId),
       fetchServicesCatalog(session.businessId),
       fetchStaffForBusiness(session.businessId)
-    ]);
-    setProfessionals(pros);
-    setCatalog(cat);
-    const map = {};
-    staffRows.forEach((s) => { if (s.professional_id) map[s.professional_id] = s.id; });
-    setStaffByPro(map);
-    setLoading(false);
-  };
-
-  useEffect(() => { load(); }, [session.businessId]);
+    ]).then(([{ data: pros }, { data: cat }, { data: staffRows }]) => {
+      if (!active) return;
+      setProfessionals(pros);
+      setCatalog(cat);
+      const map = {};
+      staffRows.forEach((s) => { if (s.professional_id) map[s.professional_id] = s.id; });
+      setStaffByPro(map);
+      setLoading(false);
+    });
+    return () => { active = false; };
+  }, [session.businessId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
