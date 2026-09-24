@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { usePanelAuth } from '../PanelAuthContext';
 import { fetchBusinessById, updateBusinessReal, uploadImage, deleteImage, fileExt } from '../../lib/api';
+import { formatLead } from '../../utils/reminders';
 import { IconX, IconCamera } from '../../components/Icons';
 import './DatosNegocio.css';
 
@@ -17,6 +18,46 @@ function cloneSchedule(schedule) {
   return copy;
 }
 
+/* ---- Recordatorios: pasan de minutos a "valor + unidad" y viceversa ---- */
+const splitMinutes = (min) =>
+  min % 60 === 0 ? { val: String(min / 60), unit: 'h' } : { val: String(min), unit: 'm' };
+const toMinutes = (val, unit) => Math.round(Number(val) * (unit === 'h' ? 60 : 1));
+const validLead = (m) => Number.isFinite(m) && m >= 15 && m <= 1440;
+
+function ReminderRow({ title, on, onToggle, val, unit, onVal, onUnit }) {
+  return (
+    <div className={`dn-rem ${on ? 'on' : ''}`}>
+      <div className="dn-rem-head">
+        <div>
+          <strong>{title}</strong>
+          <small>{on ? 'Activado' : 'Desactivado'}</small>
+        </div>
+        <label className="dn-switch">
+          <input type="checkbox" checked={on} onChange={(e) => onToggle(e.target.checked)} />
+          <span className="dn-switch-track"><span className="dn-switch-thumb" /></span>
+        </label>
+      </div>
+      <div className="dn-rem-body">
+        <span>Avisar</span>
+        <input
+          className="dn-rem-input"
+          type="number"
+          min="1"
+          step="any"
+          inputMode="decimal"
+          value={val}
+          onChange={(e) => onVal(e.target.value)}
+        />
+        <select className="dn-rem-select" value={unit} onChange={(e) => onUnit(e.target.value)}>
+          <option value="m">minutos</option>
+          <option value="h">horas</option>
+        </select>
+        <span>antes del turno</span>
+      </div>
+    </div>
+  );
+}
+
 export default function DatosNegocio() {
   const { session } = usePanelAuth();
   const [loading, setLoading] = useState(true);
@@ -30,8 +71,18 @@ export default function DatosNegocio() {
   const [slotMinutes, setSlotMinutes] = useState(40);
   const [customMode, setCustomMode] = useState(false);
   const [schedule, setSchedule] = useState({});
-   const [placePhotos, setPlacePhotos] = useState([]);
+  const [placePhotos, setPlacePhotos] = useState([]);
   const [pricesEnabled, setPricesEnabled] = useState(false);
+
+  const [r1On, setR1On] = useState(true);
+  const [r1Val, setR1Val] = useState('2');
+  const [r1Unit, setR1Unit] = useState('h');
+  const [r2On, setR2On] = useState(true);
+  const [r2Val, setR2Val] = useState('30');
+  const [r2Unit, setR2Unit] = useState('m');
+  const [remindersToPro, setRemindersToPro] = useState(true);
+  const [saveError, setSaveError] = useState('');
+
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -52,14 +103,24 @@ export default function DatosNegocio() {
         setSlotMinutes(data.slot_minutes ?? 40);
         setCustomMode(!PRESET_MINUTES.includes(data.slot_minutes));
         setSchedule(cloneSchedule(data.schedule));
-                setPlacePhotos((data.place_photos || []).map((p) => ({ ...p })));
+        setPlacePhotos((data.place_photos || []).map((p) => ({ ...p })));
         setPricesEnabled(!!data.prices_enabled);
+
+        const a = splitMinutes(data.reminder1_minutes ?? 120);
+        setR1On(data.reminder1_enabled ?? true);
+        setR1Val(a.val);
+        setR1Unit(a.unit);
+        const b = splitMinutes(data.reminder2_minutes ?? 30);
+        setR2On(data.reminder2_enabled ?? true);
+        setR2Val(b.val);
+        setR2Unit(b.unit);
+        setRemindersToPro(data.reminders_to_pro ?? true);
       }
       setLoading(false);
     })();
   }, [session.businessId]);
 
-  const touch = () => setSaved(false);
+  const touch = () => { setSaved(false); setSaveError(''); };
 
   const handleDurationSelect = (e) => {
     touch();
@@ -86,7 +147,7 @@ export default function DatosNegocio() {
     }));
   };
 
-    const handleLogoChange = async (e) => {
+  const handleLogoChange = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
@@ -123,22 +184,57 @@ export default function DatosNegocio() {
     touch();
     setPlacePhotos((prev) => prev.map((p, idx) => (idx === i ? { ...p, caption: value } : p)));
   };
-    const removePlacePhoto = async (i) => {
+
+  const removePlacePhoto = async (i) => {
     touch();
     const removed = placePhotos[i];
     setPlacePhotos((prev) => prev.filter((_, idx) => idx !== i));
     if (removed?.path) await deleteImage(removed.path);
   };
 
+  /* ---- Validación de recordatorios (se recalcula en cada render) ---- */
+  const m1 = toMinutes(r1Val, r1Unit);
+  const m2 = toMinutes(r2Val, r2Unit);
+  let reminderError = '';
+  if (!validLead(m1) || !validLead(m2)) {
+    reminderError = 'Cada recordatorio tiene que estar entre 15 minutos y 24 horas.';
+  } else if (m1 === m2) {
+    reminderError = 'Los dos recordatorios no pueden avisar con la misma anticipación.';
+  }
+
+  let reminderSummary = '';
+  if (!reminderError) {
+    const leads = [];
+    if (r1On) leads.push(m1);
+    if (r2On) leads.push(m2);
+    leads.sort((a, b) => b - a);
+    reminderSummary = leads.length === 0
+      ? 'No se enviarán recordatorios a los clientes.'
+      : `Los clientes con correo recibirán el aviso ${leads.map(formatLead).join(' y ')} antes del turno.`;
+  }
+
   const handleSave = async () => {
+    if (reminderError) {
+      setSaveError('Corregí los recordatorios antes de guardar.');
+      return;
+    }
     setSaving(true);
-        const { error } = await updateBusinessReal(session.businessId, {
+    setSaveError('');
+    const { error } = await updateBusinessReal(session.businessId, {
       name, tagline, address, address_detail: addressDetail, policy_notice: policyNotice,
       min_hours_ahead: minHoursAhead, slot_minutes: slotMinutes, schedule, place_photos: placePhotos,
-      prices_enabled: pricesEnabled
+      prices_enabled: pricesEnabled,
+      reminder1_enabled: r1On, reminder1_minutes: m1,
+      reminder2_enabled: r2On, reminder2_minutes: m2,
+      reminders_to_pro: remindersToPro
     });
     setSaving(false);
-    if (!error) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
+    if (error) {
+      setSaveError('No se pudieron guardar los cambios. Revisá los datos e intentá de nuevo.');
+      return;
+    }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
   };
 
   if (loading) return <p className="ah-loading">Cargando...</p>;
@@ -150,7 +246,7 @@ export default function DatosNegocio() {
         <p className="dn-sub">Esto se aplica a toda la barbería, no a un profesional en particular</p>
       </div>
 
-            <div className="dn-section">
+      <div className="dn-section">
         <div className="dn-logo-row">
           <div className="dn-logo">{logo && <img src={logo} alt={name} />}</div>
           <label className="dn-logo-btn">
@@ -184,7 +280,7 @@ export default function DatosNegocio() {
       <div className="dn-section">
         <h2>Política de reservas</h2>
         <div className="dn-field">
-          <label>Aviso importante (se muestra antes del calendario)</label>
+          <label>Aviso importante (se muestra antes del calendario y va en el turno del calendario y en el mail de confirmación)</label>
           <textarea rows="2" value={policyNotice} onChange={(e) => { touch(); setPolicyNotice(e.target.value); }} />
         </div>
         <div className="dn-field-row">
@@ -216,6 +312,48 @@ export default function DatosNegocio() {
       </div>
 
       <div className="dn-section">
+        <h2>Recordatorios por correo</h2>
+        <p className="dn-hint">
+          Se mandan al correo que el cliente deja al reservar. Cada cliente puede darse de baja desde el mismo mail.
+          Si un cliente reserva con menos anticipación que el aviso, ese aviso no se envía.
+        </p>
+
+        <ReminderRow
+          title="Primer recordatorio"
+          on={r1On}
+          onToggle={(v) => { touch(); setR1On(v); }}
+          val={r1Val}
+          unit={r1Unit}
+          onVal={(v) => { touch(); setR1Val(v); }}
+          onUnit={(v) => { touch(); setR1Unit(v); }}
+        />
+        <ReminderRow
+          title="Segundo recordatorio"
+          on={r2On}
+          onToggle={(v) => { touch(); setR2On(v); }}
+          val={r2Val}
+          unit={r2Unit}
+          onVal={(v) => { touch(); setR2Val(v); }}
+          onUnit={(v) => { touch(); setR2Unit(v); }}
+        />
+
+        {reminderError
+          ? <p className="dn-error">{reminderError}</p>
+          : <p className="dn-rem-summary">{reminderSummary}</p>}
+
+        <label className="dn-toggle-row">
+          <span>Enviar los recordatorios también al profesional</span>
+          <span className="dn-switch">
+            <input type="checkbox" checked={remindersToPro} onChange={(e) => { touch(); setRemindersToPro(e.target.checked); }} />
+            <span className="dn-switch-track"><span className="dn-switch-thumb" /></span>
+          </span>
+        </label>
+        <p className="dn-hint">
+          Le llegan al correo de avisos que cada profesional cargó en "Mi perfil". Cada profesional también puede apagar sus avisos desde ahí.
+        </p>
+      </div>
+
+      <div className="dn-section">
         <h2>Horario general</h2>
         <p className="dn-hint">Esto es lo que usa cualquier profesional que no tenga su propio horario cargado</p>
 
@@ -236,7 +374,7 @@ export default function DatosNegocio() {
                   <p className="dn-off-label">Cerrado</p>
                 ) : (
                   <div className="dn-ranges">
-                                        {ranges.map((range, i) => {
+                    {ranges.map((range, i) => {
                       const toMinCheck = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
                       const invalid = toMinCheck(range[1]) <= toMinCheck(range[0]);
                       return (
@@ -258,7 +396,7 @@ export default function DatosNegocio() {
         </div>
       </div>
 
-            <div className="dn-section">
+      <div className="dn-section">
         <div className="dn-section-head">
           <h2>Fotos del local</h2>
           <label className="dn-add-photo">
@@ -283,6 +421,8 @@ export default function DatosNegocio() {
           </div>
         )}
       </div>
+
+      {saveError && <p className="dn-error dn-save-error">{saveError}</p>}
 
       <div className="dn-footer">
         <button type="button" className="dn-save" onClick={handleSave} disabled={saving}>

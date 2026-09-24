@@ -66,6 +66,10 @@ export async function fetchBusinessData(slug) {
     platform: { name: biz.platform_name, url: biz.platform_url },
     features: { referencePhoto: biz.feature_reference_photo },
     pricesEnabled: !!biz.prices_enabled,
+    reminders: {
+      r1: { enabled: !!biz.reminder1_enabled, minutes: biz.reminder1_minutes },
+      r2: { enabled: !!biz.reminder2_enabled, minutes: biz.reminder2_minutes }
+    },
     services: services.map((s) => ({ id: s.slug, label: s.label, price: s.price })),
     professionals: shapedProfessionals
   };
@@ -227,8 +231,10 @@ export async function deleteReviewReal(id) {
 }
 
 // ============ LISTA DE ESPERA ============
-export async function insertWaitlistEntry({ professionalId, date, name, phone }) {
-  const { error } = await supabase.from('waitlist').insert({ professional_id: professionalId, date, name, phone });
+export async function insertWaitlistEntry({ professionalId, date, name, phone, email }) {
+  const { error } = await supabase
+    .from('waitlist')
+    .insert({ professional_id: professionalId, date, name, phone, email });
   return { error };
 }
 
@@ -391,22 +397,6 @@ export async function fetchWaitlistForDate(professionalId, date) {
   const { data, error } = await supabase
     .from('waitlist').select('*').eq('professional_id', professionalId).eq('date', date);
   return { data: data || [], error };
-}
-
-export async function sendEmail({ to, toName, subject, htmlContent, attachmentName, attachmentContent }) {
-  try {
-    const { data, error } = await supabase.functions.invoke('send-email', {
-      body: { to, toName, subject, htmlContent, attachmentName, attachmentContent },
-    });
-    if (error) {
-      console.error('Error enviando email:', error);
-      return { success: false, error };
-    }
-    return { success: true, data };
-  } catch (err) {
-    console.error('Error enviando email:', err);
-    return { success: false, error: err };
-  }
 }
 
 export async function findBookingByCode(businessId, code) {

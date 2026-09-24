@@ -14,10 +14,9 @@ import {
   insertWaitlistEntry,
   fetchApprovedReviewsReal,
   uploadImage,
-  fileExt,
-  sendEmail
+  fileExt
 } from '../lib/api';
-import { supabase } from '../lib/supabaseClient';
+import { buildReminderHint } from '../utils/reminders';
 import './Landing.css';
 
 /* ================= HELPERS PUROS ================= */
@@ -36,15 +35,7 @@ const toMin = (hhmm) => {
 const toHHMM = (mins) =>
   `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
 
-// Limpia texto que escribe el cliente antes de meterlo en el HTML de un mail
-const escapeHtml = (s) =>
-  String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-
-/* ---- Armado del archivo .ics (invitación de calendario) ---- */
+/* ---- Armado del archivo .ics que se descarga desde el modal de confirmación ---- */
 const pad2 = (n) => String(n).padStart(2, '0');
 
 const toIcsLocal = (date) =>
@@ -55,20 +46,48 @@ const toIcsUtcNow = () => {
   return `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}T${pad2(d.getUTCHours())}${pad2(d.getUTCMinutes())}${pad2(d.getUTCSeconds())}Z`;
 };
 
-// El valor de CN va entre comillas para que un ":" o un ";" en el nombre no rompa el archivo
-const icsCn = (s) => `"${String(s ?? '').replace(/["\r\n]/g, '')}"`;
+// En los textos del .ics hay que escribir \\ \; \, y los saltos de línea como \n
+const icsEscape = (s) =>
+  String(s ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r?\n/g, '\\n');
 
-// Convierte a base64 sin romperse con tildes/ñ (Brevo necesita el adjunto en base64)
+// Las líneas del .ics no pueden pasar de 75 bytes: las largas se cortan y siguen en la línea de abajo con un espacio
+const foldIcsLine = (line) => {
+  const enc = new TextEncoder();
+  let out = '';
+  let cur = '';
+  let bytes = 0;
+  for (const ch of line) {
+    const b = enc.encode(ch).length;
+    if (bytes + b > 74) {
+      out += cur + '\r\n ';
+      cur = '';
+      bytes = 1;
+    }
+    cur += ch;
+    bytes += b;
+  }
+  return out + cur;
+};
+
+// Convierte a base64 sin romperse con tildes/ñ
 const base64Utf8 = (str) => btoa(unescape(encodeURIComponent(str)));
 
-function buildBookingIcs({ code, businessName, address, professionalName, serviceNames, startDate, durationMinutes, attendeeEmail, attendeeName }) {
+function buildBookingIcs({ code, businessName, address, professionalName, serviceNames, startDate, durationMinutes, policy }) {
   const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+
+  let description = `Servicios: ${serviceNames}\nCodigo de turno: ${code}`;
+  if (policy) description += `\n\nIMPORTANTE: ${policy}`;
+
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//TurnosBS//Turno//ES',
     'CALSCALE:GREGORIAN',
-    'METHOD:REQUEST',
+    'METHOD:PUBLISH',
     'BEGIN:VEVENT',
     `UID:${code}@turnosbs`,
     'SEQUENCE:0',
@@ -76,15 +95,9 @@ function buildBookingIcs({ code, businessName, address, professionalName, servic
     `DTSTAMP:${toIcsUtcNow()}`,
     `DTSTART:${toIcsLocal(startDate)}`,
     `DTEND:${toIcsLocal(endDate)}`,
-    `SUMMARY:Turno en ${businessName} con ${professionalName}`,
-    `DESCRIPTION:Servicios: ${serviceNames} - Codigo: ${code}`,
-    `LOCATION:${address || ''}`,
-    `ORGANIZER;CN=${icsCn(businessName)}:mailto:ricardoinsaurralde32@gmail.com`
-  ];
-  if (attendeeEmail) {
-    lines.push(`ATTENDEE;CN=${icsCn(attendeeName || attendeeEmail)};RSVP=TRUE:mailto:${attendeeEmail}`);
-  }
-  lines.push(
+    `SUMMARY:${icsEscape(`Turno en ${businessName} con ${professionalName}`)}`,
+    `DESCRIPTION:${icsEscape(description)}`,
+    `LOCATION:${icsEscape(address || '')}`,
     'BEGIN:VALARM',
     'TRIGGER:-PT30M',
     'ACTION:DISPLAY',
@@ -92,8 +105,8 @@ function buildBookingIcs({ code, businessName, address, professionalName, servic
     'END:VALARM',
     'END:VEVENT',
     'END:VCALENDAR'
-  );
-  return base64Utf8(lines.join('\r\n'));
+  ];
+  return base64Utf8(lines.map(foldIcsLine).join('\r\n'));
 }
 
 const MONTHS_AHEAD = 1;
@@ -142,6 +155,8 @@ export default function Landing() {
   const [waitlistDone, setWaitlistDone] = useState(false);
   const [wlName, setWlName] = useState('');
   const [wlPhone, setWlPhone] = useState('');
+  const [wlEmail, setWlEmail] = useState('');
+  const [wlErrors, setWlErrors] = useState({});
 
   const [approvedReviews, setApprovedReviews] = useState([]);
 
@@ -259,7 +274,7 @@ export default function Landing() {
     const slug = params.get('prof');
     if (!slug) return;
 
-        const pro = businessData.professionals.find((p) => p.slug === slug && p.services.length > 0);
+    const pro = businessData.professionals.find((p) => p.slug === slug && p.services.length > 0);
     if (!pro) return;
 
     (async () => {
@@ -417,6 +432,8 @@ export default function Landing() {
     setWaitlistDone(false);
     setWlName('');
     setWlPhone('');
+    setWlEmail('');
+    setWlErrors({});
 
     setBookedMapReady(false);
     const [bMap, xMap] = await Promise.all([
@@ -438,6 +455,8 @@ export default function Landing() {
     setWaitlistDone(false);
     setWlName('');
     setWlPhone('');
+    setWlEmail('');
+    setWlErrors({});
     scrollTo(timeRef);
   };
 
@@ -448,12 +467,20 @@ export default function Landing() {
 
   const handleJoinWaitlist = async (e) => {
     e.preventDefault();
-    if (!wlName.trim() || !wlPhone.trim()) return;
+    const nextErrors = {};
+    if (!wlName.trim()) nextErrors.name = 'Ingresá tu nombre';
+    if (!wlPhone.trim()) nextErrors.phone = 'Ingresá tu celular';
+    if (!wlEmail.trim()) nextErrors.email = 'Ingresá tu correo, es donde te avisamos si se libera un turno';
+    if (Object.keys(nextErrors).length > 0) {
+      setWlErrors(nextErrors);
+      return;
+    }
     await insertWaitlistEntry({
       professionalId: professional.id,
       date: dateKey(selectedDate),
       name: wlName.trim(),
-      phone: wlPhone.trim()
+      phone: wlPhone.trim(),
+      email: wlEmail.trim()
     });
     setWaitlistDone(true);
   };
@@ -531,7 +558,7 @@ export default function Landing() {
     });
     setSubmitting(false);
 
-        if (error) {
+    if (error) {
       if (error.code === '23505') {
         setErrors({ submit: 'Justo se ocupó ese horario. Elegí otro, por favor.' });
         const bMap = await fetchBookedTimesMap(professional.id);
@@ -544,236 +571,26 @@ export default function Landing() {
       return;
     }
 
+    // Los mails de confirmación (al cliente y al profesional) los manda el servidor solo,
+    // apenas se guarda el turno. Acá solo se arma el archivo de calendario que se descarga desde el modal.
     const [bkHH, bkMM] = selectedTime.split(':').map(Number);
     const startDateTime = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), bkHH, bkMM);
     const icsServiceNames = businessData.services
       .filter((s) => selectedServices.includes(s.id))
       .map((s) => s.label)
       .join(', ');
-    const icsDownloadBase64 = buildBookingIcs({
-      code: bookingResult.access_code,
-      businessName: businessData.name,
-      address: businessData.address,
-      professionalName: professional.name,
-      serviceNames: icsServiceNames,
-      startDate: startDateTime,
-      durationMinutes: businessData.slotMinutes
-    });
-    setLastIcs(icsDownloadBase64);
-
-    if (form.email.trim()) {
-      const serviceNames = businessData.services
-        .filter((s) => selectedServices.includes(s.id))
-        .map((s) => s.label)
-        .join(', ');
-
-      const rawDateLabel = selectedDate.toLocaleDateString('es-AR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long'
-      });
-      const dateLabel = rawDateLabel.charAt(0).toUpperCase() + rawDateLabel.slice(1);
-
-      const manageLink = `${window.location.origin}/?turno=${bookingResult.access_code}`;
-
-      const icsClientBase64 = buildBookingIcs({
+    setLastIcs(
+      buildBookingIcs({
         code: bookingResult.access_code,
         businessName: businessData.name,
         address: businessData.address,
         professionalName: professional.name,
-        serviceNames,
+        serviceNames: icsServiceNames,
         startDate: startDateTime,
         durationMinutes: businessData.slotMinutes,
-        attendeeEmail: form.email.trim(),
-        attendeeName: form.name.trim()
-      });
-
-      sendEmail({
-        to: form.email.trim(),
-        toName: form.name.trim(),
-        subject: `Turno confirmado - ${businessData.name}`,
-        attachmentName: 'Turno-BarberStudio.ics',
-        attachmentContent: icsClientBase64,
-        htmlContent: `
-          <meta name="color-scheme" content="light dark">
-          <meta name="supported-color-schemes" content="light dark">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td align="center" style="padding:32px 20px; font-family:Arial, Helvetica, sans-serif;">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;">
-
-                  <tr>
-                    <td align="center" style="padding-bottom:18px; font-size:19px; font-weight:bold; color:#111111;">
-                      ${businessData.name}
-                    </td>
-                  </tr>
-                  <tr><td style="border-top:1px solid #dddddd;"></td></tr>
-
-                  <tr>
-                    <td style="padding:22px 4px 4px;">
-                      <span style="display:inline-block; background:#eaffd0; color:#3a6b00; font-size:11px; font-weight:bold; letter-spacing:0.5px; padding:5px 12px; border-radius:999px;">
-                        ✅ TURNO CONFIRMADO
-                      </span>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td style="padding:14px 4px 0; font-size:15px; color:#333333; line-height:1.55;">
-                      Hola <strong>${escapeHtml(form.name.trim())}</strong>, te esperamos con <strong>${professional.name}</strong>.
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td style="padding:18px 4px 0; font-size:14px; color:#444444; line-height:1.9;">
-                      📅 <strong style="color:#111111;">${dateLabel}</strong><br/>
-                      🕒 <strong style="color:#111111;">${selectedTime}</strong><br/>
-                      ✂️ <strong style="color:#111111;">${escapeHtml(serviceNames)}</strong>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td align="center" style="padding:26px 4px 6px;">
-                      <div style="font-size:11px; color:#888888; margin-bottom:6px; letter-spacing:0.5px;">TU CÓDIGO DE TURNO</div>
-                      <div style="display:inline-block; font-size:22px; font-weight:bold; letter-spacing:4px; color:#3a6b00; border:1px solid #b8f14c; padding:10px 20px; border-radius:8px;">
-                        ${bookingResult.access_code}
-                      </div>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td align="center" style="padding:22px 4px 6px;">
-                      <a href="${manageLink}" style="display:inline-block; background:#b8f14c; color:#0d0d0d; text-decoration:none; font-weight:bold; font-size:14px; padding:13px 30px; border-radius:999px;">
-                        Gestionar mi turno
-                      </a>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td align="center" style="padding:12px 4px 0; font-size:12px; color:#999999; line-height:1.6;">
-                      Cancelá cuando quieras con ese botón, sin escribirnos.<br/>
-                      Adjuntamos el turno para tu calendario, con recordatorio 30 min antes.
-                    </td>
-                  </tr>
-
-                  <tr><td style="padding-top:26px;"><div style="border-top:1px solid #dddddd;"></div></td></tr>
-
-                  <tr>
-                    <td align="center" style="padding:14px 4px 0; font-size:11px; color:#aaaaaa;">
-                      ${businessData.name}${businessData.address ? ' · ' + businessData.address : ''}
-                    </td>
-                  </tr>
-
-                </table>
-              </td>
-            </tr>
-          </table>
-        `
-      });
-    }
-
-    const { data: notifyTo } = await supabase.rpc('get_notify_email', {
-      p_professional_id: professional.id
-    });
-
-    if (notifyTo) {
-      const serviceNamesOwner = businessData.services
-        .filter((s) => selectedServices.includes(s.id))
-        .map((s) => s.label)
-        .join(', ');
-
-      const rawDateLabelOwner = selectedDate.toLocaleDateString('es-AR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long'
-      });
-      const dateLabelOwner = rawDateLabelOwner.charAt(0).toUpperCase() + rawDateLabelOwner.slice(1);
-
-      const icsOwnerBase64 = buildBookingIcs({
-        code: bookingResult.access_code,
-        businessName: businessData.name,
-        address: businessData.address,
-        professionalName: professional.name,
-        serviceNames: serviceNamesOwner,
-        startDate: startDateTime,
-        durationMinutes: businessData.slotMinutes,
-        attendeeEmail: notifyTo,
-        attendeeName: professional.name
-      });
-
-      sendEmail({
-        to: notifyTo,
-        toName: professional.name,
-        subject: `Nuevo turno reservado - ${form.name.trim()}`,
-        attachmentName: 'Turno-BarberStudio.ics',
-        attachmentContent: icsOwnerBase64,
-        htmlContent: `
-          <meta name="color-scheme" content="light dark">
-          <meta name="supported-color-schemes" content="light dark">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td align="center" style="padding:32px 20px; font-family:Arial, Helvetica, sans-serif;">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;">
-
-                  <tr>
-                    <td align="center" style="padding-bottom:18px; font-size:19px; font-weight:bold; color:#111111;">
-                      ${businessData.name}
-                    </td>
-                  </tr>
-                  <tr><td style="border-top:1px solid #dddddd;"></td></tr>
-
-                  <tr>
-                    <td style="padding:22px 4px 4px;">
-                      <span style="display:inline-block; background:#fff2d6; color:#8a5b00; font-size:11px; font-weight:bold; letter-spacing:0.5px; padding:5px 12px; border-radius:999px;">
-                        🔔 NUEVO TURNO
-                      </span>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td style="padding:14px 4px 0; font-size:15px; color:#333333;">
-                      Te reservaron un turno, ${professional.name}.
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td style="padding:18px 4px 0; font-size:14px; color:#444444; line-height:1.9;">
-                      🙋 <strong style="color:#111111;">${escapeHtml(form.name.trim())}</strong><br/>
-                      📱 <strong style="color:#111111;">${escapeHtml(form.phone.trim())}</strong><br/>
-                      📅 <strong style="color:#111111;">${dateLabelOwner}</strong><br/>
-                      🕒 <strong style="color:#111111;">${selectedTime}</strong><br/>
-                      ✂️ <strong style="color:#111111;">${escapeHtml(serviceNamesOwner)}</strong>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td align="center" style="padding:24px 4px 6px;">
-                      <a href="https://wa.me/${form.phone.trim().replace(/\D/g, '')}" style="display:inline-block; background:#25d366; color:#ffffff; text-decoration:none; font-weight:bold; font-size:14px; padding:13px 30px; border-radius:999px;">
-                        Escribirle por WhatsApp
-                      </a>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td align="center" style="padding:12px 4px 0; font-size:12px; color:#999999;">
-                      Adjuntamos el turno para tu calendario, con recordatorio 30 min antes.
-                    </td>
-                  </tr>
-
-                  <tr><td style="padding-top:26px;"><div style="border-top:1px solid #dddddd;"></div></td></tr>
-
-                  <tr>
-                    <td align="center" style="padding:14px 4px 0; font-size:11px; color:#aaaaaa;">
-                      ${businessData.name}
-                    </td>
-                  </tr>
-
-                </table>
-              </td>
-            </tr>
-          </table>
-        `
-      });
-    }
+        policy: businessData.policyNotice
+      })
+    );
 
     setShowModal(true);
   };
@@ -801,7 +618,7 @@ export default function Landing() {
     );
   }
 
-    const proServices = professional
+  const proServices = professional
     ? businessData.services.filter((s) => professional.services.includes(s.id))
     : [];
 
@@ -812,6 +629,7 @@ export default function Landing() {
   const rawDateLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
   const todayLabel = rawDateLabel.charAt(0).toUpperCase() + rawDateLabel.slice(1);
   const hasPlacePhotos = (businessData.placePhotos || []).length > 0;
+  const reminderHint = buildReminderHint(businessData.reminders);
 
   /* ================= RENDER ================= */
 
@@ -850,7 +668,7 @@ export default function Landing() {
       <section className="section" ref={proRef}>
         <h2 className="section-title">Elije un profesional</h2>
 
-                <div className="pro-grid">
+        <div className="pro-grid">
           {businessData.professionals.filter((p) => p.services.length > 0).map((pro, i) => (
             <ProCard
               key={pro.id}
@@ -964,11 +782,33 @@ export default function Landing() {
                   <p>No quedan turnos disponibles para este día.</p>
 
                   {waitlistDone ? (
-                    <p className="waitlist-done">✓ Te anotamos en la lista de espera. Te avisamos si se libera un turno.</p>
+                    <p className="waitlist-done">✓ Te anotamos en la lista de espera. Te avisamos por correo si se libera un turno.</p>
                   ) : waitlistOpen ? (
-                    <form className="waitlist-form" onSubmit={handleJoinWaitlist}>
-                      <input type="text" placeholder="Tu nombre" value={wlName} onChange={(e) => setWlName(e.target.value)} required />
-                      <input type="tel" placeholder="Tu celular" value={wlPhone} onChange={(e) => setWlPhone(e.target.value)} required />
+                    <form className="waitlist-form" onSubmit={handleJoinWaitlist} noValidate>
+                      <input
+                        type="text"
+                        placeholder="Tu nombre"
+                        value={wlName}
+                        onChange={(e) => { setWlName(e.target.value); setWlErrors((p) => ({ ...p, name: '' })); }}
+                      />
+                      {wlErrors.name && <span className="err">{wlErrors.name}</span>}
+
+                      <input
+                        type="email"
+                        placeholder="Tu correo (para avisarte si se libera un turno)"
+                        value={wlEmail}
+                        onChange={(e) => { setWlEmail(e.target.value); setWlErrors((p) => ({ ...p, email: '' })); }}
+                      />
+                      {wlErrors.email && <span className="err">{wlErrors.email}</span>}
+
+                      <input
+                        type="tel"
+                        placeholder="Tu celular"
+                        value={wlPhone}
+                        onChange={(e) => { setWlPhone(e.target.value); setWlErrors((p) => ({ ...p, phone: '' })); }}
+                      />
+                      {wlErrors.phone && <span className="err">{wlErrors.phone}</span>}
+
                       <button type="submit" className="btn-neon btn-sm">Anotarme</button>
                     </form>
                   ) : (
@@ -1028,13 +868,11 @@ export default function Landing() {
 
             <div className="field">
               <label htmlFor="email">Correo (opcional)</label>
-              <p className="field-hint">
-                Dejá tu correo y te avisamos 2 horas y 30 minutos antes de tu turno.
-              </p>
+              {reminderHint && <p className="field-hint">{reminderHint}</p>}
               <input id="email" name="email" type="email" value={form.email} onChange={handleChange} />
             </div>
 
-                        <div className="field field-center">
+            <div className="field field-center">
               <label>*Servicios</label>
               <div className="service-chips">
                 {proServices.map((s) => (

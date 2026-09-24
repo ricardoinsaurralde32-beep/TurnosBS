@@ -150,3 +150,50 @@
 .dn-range { flex-wrap: wrap; }
 .dn-range-invalid input[type="time"] { border-color: var(--danger); box-shadow: 0 0 8px rgba(255,107,107,0.3); }
 .dn-range-warning { width: 100%; color: var(--danger); font-size: 0.7rem; margin-top: 2px; }
+
+/* ===== Recordatorios por correo ===== */
+.dn-rem {
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+  transition: border-color 0.3s ease, opacity 0.3s ease;
+}
+.dn-rem.on {
+  opacity: 1;
+  border-color: rgba(184, 241, 76, 0.4);
+  animation: dnRemGlow 3.2s ease-in-out infinite;
+}
+@keyframes dnRemGlow {
+  0%, 100% { box-shadow: 0 0 0 rgba(184, 241, 76, 0); }
+  50% { box-shadow: 0 0 16px rgba(184, 241, 76, 0.18); }
+}
+
+.dn-rem-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dn-rem-head strong { display: block; color: #fff; font-size: 0.9rem; font-weight: 700; }
+.dn-rem-head small { color: var(--gray); font-size: 0.74rem; }
+.dn-rem.on .dn-rem-head small { color: var(--neon); }
+
+.dn-rem-body {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  margin-top: 12px; color: var(--gray); font-size: 0.82rem;
+}
+.dn-rem-input, .dn-rem-select {
+  background-color: var(--black);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: #fff;
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+}
+.dn-rem-input { width: 76px; }
+.dn-rem-input:focus, .dn-rem-select:focus { border-color: var(--neon); }
+
+.dn-rem-summary { color: var(--neon); font-size: 0.8rem; margin: 4px 0 6px; }
+
+.dn-error { color: var(--danger); font-size: 0.78rem; margin: 8px 0; }
+.dn-save-error { text-align: center; margin-top: 20px; }
