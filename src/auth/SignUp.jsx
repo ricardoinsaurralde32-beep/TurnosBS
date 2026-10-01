@@ -88,7 +88,7 @@ export default function SignUp() {
       <AuthBackground />
       <div className="auth-content">
         <Link to="/" className="auth-brand">
-          <img src="/FaviconO.png" alt="TurnosBS" className="auth-logo-img" />
+          <img src="/logo-turnosbs.png" alt="TurnosBS" className="auth-logo-img" />
         </Link>
 
         <div className="auth-card">

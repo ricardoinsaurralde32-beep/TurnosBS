@@ -16,12 +16,7 @@
   z-index: 0;
   background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
   background-size: 26px 26px;
-  animation: authGridDrift 70s linear infinite;
   pointer-events: none;
-}
-@keyframes authGridDrift {
-  from { background-position: 0 0; }
-  to { background-position: 260px 130px; }
 }
 
 .auth-sweep {
@@ -37,11 +32,11 @@
 }
 
 .auth-ambient { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-.auth-amb { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.4; }
-.auth-amb-1 { width: 440px; height: 440px; background: var(--neon, #b8f14c); top: -160px; left: -140px; animation: authFloat1 22s ease-in-out infinite; }
-.auth-amb-2 { width: 380px; height: 380px; background: var(--neon2, #4cf1d8); bottom: -180px; right: -120px; animation: authFloat2 26s ease-in-out infinite; }
-.auth-amb-3 { width: 280px; height: 280px; background: var(--neon, #b8f14c); bottom: 12%; left: 6%; opacity: 0.22; animation: authFloat3 30s ease-in-out infinite; }
-.auth-amb-4 { width: 220px; height: 220px; background: var(--neon2, #4cf1d8); top: 18%; right: 10%; opacity: 0.18; animation: authFloat4 34s ease-in-out infinite; }
+.auth-amb { position: absolute; border-radius: 50%; opacity: 0.32; will-change: transform; }
+.auth-amb-1 { width: 440px; height: 440px; background: radial-gradient(circle, var(--neon, #b8f14c) 0%, transparent 68%); top: -160px; left: -140px; animation: authFloat1 22s ease-in-out infinite; }
+.auth-amb-2 { width: 380px; height: 380px; background: radial-gradient(circle, var(--neon2, #4cf1d8) 0%, transparent 68%); bottom: -180px; right: -120px; animation: authFloat2 26s ease-in-out infinite; }
+.auth-amb-3 { width: 280px; height: 280px; background: radial-gradient(circle, var(--neon, #b8f14c) 0%, transparent 68%); bottom: 12%; left: 6%; opacity: 0.2; animation: authFloat3 30s ease-in-out infinite; }
+.auth-amb-4 { width: 220px; height: 220px; background: radial-gradient(circle, var(--neon2, #4cf1d8) 0%, transparent 68%); top: 18%; right: 10%; opacity: 0.16; animation: authFloat4 34s ease-in-out infinite; }
 
 @keyframes authFloat1 {
   0%   { transform: translate(0, 0) scale(1); }
@@ -81,9 +76,8 @@
   border: 1px solid var(--neon-dim, rgba(var(--neon-rgb), 0.22));
   border-radius: 20px;
   padding: 30px 26px;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 24px 60px rgba(0,0,0,0.55);
-  animation: authGlow 3.2s ease-in-out infinite, authFadeIn 0.45s ease-out both;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 22px var(--neon-dim, rgba(var(--neon-rgb), 0.1));
+  animation: authFadeIn 0.45s ease-out both;
 }
 @keyframes authGlow {
   0%, 100% { box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 rgba(var(--neon-rgb), 0); }
@@ -416,3 +410,50 @@
 .auth-modal-cancel { background: none; border: 1px solid rgba(255,255,255,0.18); color: #bdbdbd; }
 .auth-modal-apply { background-color: var(--neon, #b8f14c); border: none; color: #0d0d0d; }
 .auth-modal-apply:disabled { opacity: 0.45; cursor: default; }
+
+/* ---- Rendimiento en celular: menos movimiento de fondo mientras se escribe ---- */
+@media (max-width: 720px), (prefers-reduced-motion: reduce) {
+  .auth-sweep { display: none; }
+  .auth-amb-3, .auth-amb-4 { display: none; }
+  .auth-amb-1, .auth-amb-2 { animation-duration: 60s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-amb { animation: none !important; }
+  .auth-card { animation: none; }
+}
+
+/* ---- Barra de progreso del alta (reemplaza los pasos numerados) ---- */
+.auth-progress { margin-bottom: 22px; }
+.auth-progress-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.auth-progress-meta span { color: #9a9a9a; font-size: 0.76rem; font-weight: 600; letter-spacing: 0.2px; }
+.auth-progress-meta strong { color: #fff; font-size: 0.9rem; font-weight: 800; }
+.auth-progress-track { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.auth-progress-fill {
+  height: 100%; border-radius: 999px; width: 0;
+  background: linear-gradient(90deg, var(--neon, #b8f14c), var(--neon2, #4cf1d8));
+  box-shadow: 0 0 12px var(--neon-dim, rgba(184,241,76,0.35));
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---- Selector de hora propio (el nativo del celular se salía de la pantalla) ---- */
+.auth-time { display: inline-flex; align-items: center; gap: 4px; }
+.auth-time b { color: #777; font-weight: 700; }
+.auth-time select {
+  appearance: none; -webkit-appearance: none;
+  background-color: #050505; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+  padding: 8px 10px; color: #fff; font-size: 0.9rem; font-variant-numeric: tabular-nums;
+  min-width: 52px; text-align: center; cursor: pointer;
+}
+.auth-time select:focus { outline: none; border-color: var(--neon, #b8f14c); }
+.auth-range { max-width: 100%; }
+.auth-page { max-width: 100vw; }
+
+/* ---- Versión compacta: logo chico y todo más junto, para que entre en la pantalla ---- */
+.auth-page { padding: 30px 16px 32px; align-items: center; }
+.auth-brand { margin-bottom: 29px; }
+.auth-logo-img { width: 84px; filter: drop-shadow(0 0 14px rgba(var(--neon-rgb), 0.35)); }
+.auth-card { padding: 20px 20px; }
+.auth-card.auth-card-wide { padding: 20px 20px; }
+.auth-title { font-size: 1.2rem; margin-bottom: 4px; }
+.auth-sub { margin-bottom: 14px; }
+.auth-field { margin-bottom: 11px; }

@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0&display=block');
+.tc { --neon: #b8f14c; --neon2: #4cf1d8; --panel: #111315; --border: rgba(255, 255, 255, 0.1); --white: #f5f7f2; --gray: #9aa09a;
+  position: relative; min-height: 100vh; background: #08090a; color: var(--white); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; overflow-x: hidden; max-width: 100vw; }
+.tc *, .tc *::before, .tc *::after { box-sizing: border-box; }
+.tc a { text-decoration: none; color: inherit; }
+.tc em { font-style: normal; background: linear-gradient(90deg, var(--neon), var(--neon2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+.tc-progress { position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 60; }
+.tc-progress > div { height: 100%; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, var(--neon), var(--neon2)); will-change: transform; }
+.tc-glow { position: absolute; width: 70vmax; height: 70vmax; border-radius: 50%; opacity: 0.12; pointer-events: none; }
+.tc-glow.g1 { left: -35vmax; top: -30vmax; background: radial-gradient(circle, var(--neon) 0%, transparent 62%); }
+.tc-glow.g2 { right: -40vmax; top: 20vmax; background: radial-gradient(circle, var(--neon2) 0%, transparent 62%); }
+
+.tc-hero { position: relative; max-width: 760px; margin: 0 auto; padding: 28px 20px 10px; text-align: center; }
+.tc-back { display: inline-block; margin-bottom: 26px; color: var(--neon) !important; font-weight: 700; font-size: 14.5px; }
+.tc-pill { display: block; width: fit-content; margin: 0 auto 14px; font-size: 12.5px; font-weight: 700; color: var(--neon); padding: 5px 12px; border: 1px solid rgba(184, 241, 76, 0.35); border-radius: 999px; background: rgba(184, 241, 76, 0.07); animation: tcPop 0.6s ease both; }
+.tc h1 { font-size: clamp(32px, 9vw, 52px); line-height: 1.08; margin: 0 0 12px; font-weight: 800; animation: tcPop 0.7s 0.08s ease both; }
+.tc-hero p { color: var(--gray); font-size: 15.5px; line-height: 1.55; margin: 0; animation: tcPop 0.7s 0.16s ease both; }
+@keyframes tcPop { from { opacity: 0; transform: translate3d(0, 18px, 0); } to { opacity: 1; transform: none; } }
+
+.tc-hl { position: relative; max-width: 900px; margin: 28px auto 8px; padding: 0 18px; display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 720px) { .tc-hl { grid-template-columns: repeat(3, 1fr); } }
+.tc-hl-card { display: flex; flex-direction: column; gap: 5px; padding: 16px 18px; border-radius: 18px; border: 1px solid var(--border); background: var(--panel); }
+.tc-hl-card strong { font-size: 16px; }
+.tc-hl-card > span:last-child { color: var(--gray); font-size: 14px; line-height: 1.45; }
+.ms { font-family: 'Material Symbols Rounded'; font-weight: 500; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; display: inline-block; overflow: hidden; -webkit-font-smoothing: antialiased; font-feature-settings: 'liga'; user-select: none; }
+.tc-ic { font-size: 28px; width: 28px; height: 28px; color: var(--neon); }
+
+.tc-toc { position: sticky; top: 3px; z-index: 40; display: flex; gap: 8px; overflow-x: auto; padding: 12px 18px; margin-top: 18px; background: rgba(8, 9, 10, 0.96); border-bottom: 1px solid var(--border); scrollbar-width: none; }
+.tc-toc::-webkit-scrollbar { display: none; }
+.tc-toc a { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.04); color: var(--gray) !important; font-size: 13.5px; font-weight: 600; white-space: nowrap; transition: background 0.2s, color 0.2s, border-color 0.2s; }
+.tc-toc a b { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; background: rgba(255, 255, 255, 0.1); color: var(--white); }
+.tc-toc a.on { color: #0a0c08 !important; border-color: transparent; background: linear-gradient(90deg, var(--neon), var(--neon2)); }
+.tc-toc a.on b { background: rgba(0, 0, 0, 0.18); color: #0a0c08; }
+@media (min-width: 900px) { .tc-toc { justify-content: center; flex-wrap: wrap; overflow: visible; } }
+
+.tc-body { position: relative; max-width: 760px; margin: 0 auto; padding: 22px 18px 70px; display: flex; flex-direction: column; gap: 14px; }
+.tc-card { padding: 20px 20px 8px; border-radius: 20px; border: 1px solid var(--border); background: var(--panel); scroll-margin-top: 80px; }
+.tc-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.tc-num { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 15px; color: #0a0c08; background: linear-gradient(135deg, var(--neon), var(--neon2)); }
+.tc-card h2 { flex: 1; margin: 0; font-size: 18px; line-height: 1.25; }
+.tc-emoji { font-size: 26px; width: 26px; height: 26px; color: var(--neon); opacity: 0.85; }
+.tc-card p { color: #cfd4cc; font-size: 15.5px; line-height: 1.65; margin: 0 0 14px; }
+
+.tc-note { color: var(--gray); font-size: 13px; line-height: 1.5; text-align: center; margin: 14px 0 0; }
+.tc-end { margin-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 26px 20px; border-radius: 22px; border: 1px solid rgba(184, 241, 76, 0.4); background: linear-gradient(180deg, #14180d, var(--panel)); text-align: center; }
+.tc-end strong { font-size: 20px; }
+.tc-btn { display: inline-flex; padding: 13px 26px; border-radius: 14px; font-weight: 800; color: #0a0c08 !important; background: linear-gradient(90deg, var(--neon), var(--neon2)); }
+
+/* entrada y salida al deslizar */
+.tc-rv { opacity: 0; transform: translate3d(0, 28px, 0); transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); transition-delay: calc(var(--i, 0) * 0.08s); will-change: transform, opacity; }
+.tc-rv.in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tc *, .tc *::before, .tc *::after { animation: none !important; transition: none !important; }
+  .tc-rv { opacity: 1 !important; transform: none !important; }
+}
+
+.tc-foot { position: relative; max-width: 760px; margin: 0 auto; padding: 26px 20px 34px; border-top: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; color: var(--gray); font-size: 12.5px; }
+.tc-logo { font-size: 26px; font-weight: 800; letter-spacing: -1px; line-height: 1; color: var(--white); }
+.tc-logo b { color: var(--neon); font-weight: 800; }
+.tc-logo-img { height: 56px; width: auto; display: block; }

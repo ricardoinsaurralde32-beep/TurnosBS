@@ -125,8 +125,16 @@ export function PanelAuthProvider({ children }) {
     return billing;
   };
 
+  // Después de crear un negocio nuevo (alta), la sesión del panel todavía no sabe que ya es dueño
+  // de uno: se vuelve a leer el perfil para poder entrar directo al panel sin volver a loguearse.
+  const reloadProfile = async () => {
+    const { data: { session: authSession } } = await supabase.auth.getSession();
+    if (!authSession?.user) return false;
+    return loadStaffProfile(authSession.user.id);
+  };
+
   return (
-    <PanelAuthContext.Provider value={{ session, login, logout, loading, refreshBusinessTheme, refreshBilling }}>
+    <PanelAuthContext.Provider value={{ session, login, logout, loading, refreshBusinessTheme, refreshBilling, reloadProfile }}>
       {children}
     </PanelAuthContext.Provider>
   );

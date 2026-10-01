@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabaseClient';
 import ColorSchemePicker from '../components/ColorSchemePicker';
 import { SocialIcon } from '../components/Icons';
 import LocationMapModal from '../panel/LocationMapModal';
+import { usePanelAuth } from '../panel/PanelAuthContext';
 import { DEFAULT_COLOR_SCHEME, CUSTOM_SCHEME_ID, DEFAULT_CUSTOM_COLORS } from '../config/colorSchemes';
 import './Auth.css';
 
@@ -32,6 +33,27 @@ function blankSchedule() {
   WEEKDAYS.forEach((d) => { s[d.id] = []; });
   return s;
 }
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
+
+// Selector de hora propio: dos listas (hora : minutos). El selector nativo del celular se cortaba
+// ("Establecer" quedaba fuera de la pantalla) y era lento de abrir.
+function TimeSelect({ value, onChange, label }) {
+  const [h, m] = (value || '00:00').split(':');
+  const minutes = MINUTES.includes(m) ? MINUTES : [...MINUTES, m].sort();
+  return (
+    <span className="auth-time">
+      <select aria-label={`${label} (hora)`} value={h} onChange={(e) => onChange(`${e.target.value}:${m}`)}>
+        {HOURS.map((x) => <option key={x} value={x}>{x}</option>)}
+      </select>
+      <b>:</b>
+      <select aria-label={`${label} (minutos)`} value={m} onChange={(e) => onChange(`${h}:${e.target.value}`)}>
+        {minutes.map((x) => <option key={x} value={x}>{x}</option>)}
+      </select>
+    </span>
+  );
+}
+
 function toMin(hhmm) { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; }
 
 const SOCIAL_TYPES = [
@@ -119,6 +141,7 @@ export default function NewBusiness() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { reloadProfile } = usePanelAuth();
   const slugCheckTimer = useRef(null);
 
   useEffect(() => {
@@ -316,8 +339,11 @@ export default function NewBusiness() {
       console.error('No se encontró el profesional dueño tras crear el negocio; se omitió foto/rol/redes. Se puede completar desde "Mi perfil" en el panel.');
     }
 
+    // La sesión del panel todavía no sabe que ya sos dueño: se recarga el perfil y se entra directo
+    // a "Suscripción" para activar la cuenta (sin pasar por iniciar sesión otra vez).
+    await reloadProfile();
     setLoading(false);
-    navigate('/panel', { replace: true });
+    navigate('/panel/suscripcion', { replace: true });
   };
 
   if (checking) {
@@ -342,20 +368,28 @@ export default function NewBusiness() {
       <AuthBackground />
       <div className="auth-content">
         <Link to="/" className="auth-brand">
-          <img src="/FaviconO.png" alt="TurnosBS" className="auth-logo-img" />
+          <img src="/logo-turnosbs.png" alt="TurnosBS" className="auth-logo-img" />
         </Link>
 
         <div className="auth-card auth-card-wide">
           <h1 className="auth-title">Creá tu negocio</h1>
           <p className="auth-sub">En unos pasos cortos tenés tu página de turnos lista.</p>
 
-          <div className="auth-steps">
-            {STEPS.map((label, i) => (
-              <div key={label} className={`auth-step-dot ${i === step ? 'active' : ''} ${i < step ? 'done' : ''}`}>
-                <span className="auth-step-num">{i < step ? '✓' : i + 1}</span>
-                <span className="auth-step-label">{label}</span>
-              </div>
-            ))}
+          <div
+            className="auth-progress"
+            role="progressbar"
+            aria-valuemin={1}
+            aria-valuemax={STEPS.length}
+            aria-valuenow={step + 1}
+            aria-label={`Paso ${step + 1} de ${STEPS.length}: ${STEPS[step]}`}
+          >
+            <div className="auth-progress-meta">
+              <span>Paso {step + 1} de {STEPS.length}</span>
+              <strong>{STEPS[step]}</strong>
+            </div>
+            <div className="auth-progress-track">
+              <div className="auth-progress-fill" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
@@ -461,9 +495,9 @@ export default function NewBusiness() {
                               const invalid = toMin(range[1]) <= toMin(range[0]);
                               return (
                                 <div key={i} className="auth-range">
-                                  <input type="time" value={range[0]} onChange={(e) => updateRange(day.id, i, 'from', e.target.value)} />
+                                  <TimeSelect label="Desde" value={range[0]} onChange={(v) => updateRange(day.id, i, 'from', v)} />
                                   <span>a</span>
-                                  <input type="time" value={range[1]} onChange={(e) => updateRange(day.id, i, 'to', e.target.value)} />
+                                  <TimeSelect label="Hasta" value={range[1]} onChange={(v) => updateRange(day.id, i, 'to', v)} />
                                   {ranges.length > 1 && <button type="button" onClick={() => removeRange(day.id, i)}>×</button>}
                                   {invalid && <span className="auth-hint bad">"Hasta" debe ser después de "desde"</span>}
                                 </div>
