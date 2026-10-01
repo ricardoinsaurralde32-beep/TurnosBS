@@ -1,11 +1,11 @@
 .pf-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-.pf-head h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+.pf-head h1 { color: var(--white); font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
 .pf-sub { color: var(--gray); font-size: 0.83rem; }
 
 .pf-add-btn {
   padding: 10px 20px;
   background-color: var(--neon);
-  color: #0a0a0a;
+  color: var(--neon-ink, #0a0a0a);
   font-weight: 800;
   border-radius: 999px;
   font-size: 0.85rem;
@@ -28,14 +28,14 @@
 
 .pf-form-row { display: flex; flex-direction: column; gap: 14px; }
 
-.pf-field label { display: block; color: #fff; font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; }
+.pf-field label { display: block; color: var(--white); font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; }
 .pf-field input {
   width: 100%;
   background-color: var(--black);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 9px 12px;
-  color: #fff;
+  color: var(--white);
   font-size: 0.86rem;
   outline: none;
 }
@@ -52,13 +52,13 @@
   font-weight: 600;
   transition: all 0.2s ease;
 }
-.pf-chip.active { background-color: var(--neon); border-color: var(--neon); color: #0a0a0a; }
+.pf-chip.active { background-color: var(--neon); border-color: var(--neon); color: var(--neon-ink, #0a0a0a); }
 
 .pf-submit {
   align-self: flex-start;
   padding: 10px 26px;
   background-color: var(--neon);
-  color: #0a0a0a;
+  color: var(--neon-ink, #0a0a0a);
   font-weight: 800;
   border-radius: 999px;
   font-size: 0.85rem;
@@ -90,13 +90,13 @@
 .pf-info { flex: 1; min-width: 160px; }
 
 .pf-name-row { display: flex; align-items: center; gap: 8px; }
-.pf-name { color: #fff; font-weight: 700; font-size: 0.98rem; }
+.pf-name { color: var(--white); font-weight: 700; font-size: 0.98rem; }
 
 .pf-owner-badge {
   font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
   color: var(--neon);
-  background-color: rgba(184,241,76,0.1);
-  border: 1px solid rgba(184,241,76,0.3);
+  background-color: rgba(var(--neon-rgb), 0.1);
+  border: 1px solid rgba(var(--neon-rgb), 0.3);
   padding: 2px 9px; border-radius: 999px;
 }
 
@@ -106,7 +106,7 @@
 .pf-service-tag {
   font-size: 0.7rem;
   color: var(--gray);
-  background-color: rgba(255,255,255,0.04);
+  background-color: rgba(var(--overlay-rgb), 0.04);
   border: 1px solid var(--border);
   padding: 2px 9px;
   border-radius: 999px;
@@ -134,7 +134,7 @@
   padding: 10px 12px;
   display: flex; flex-direction: column; gap: 8px;
 }
-.pf-confirm span { color: #fff; font-size: 0.8rem; }
+.pf-confirm span { color: var(--white); font-size: 0.8rem; }
 .pf-confirm-btns { display: flex; gap: 8px; }
 
 .pf-confirm-yes { padding: 6px 14px; background-color: var(--danger); color: #fff; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
@@ -154,10 +154,10 @@
 
 .pf-access-badge {
   font-size: 0.62rem; font-weight: 800; text-transform: uppercase;
-  color: #666; background-color: rgba(255,255,255,0.05);
+  color: #666; background-color: rgba(var(--overlay-rgb), 0.05);
   border: 1px solid var(--border); padding: 2px 9px; border-radius: 999px;
 }
-.pf-access-badge.has { color: var(--neon); background-color: rgba(184,241,76,0.1); border-color: rgba(184,241,76,0.3); }
+.pf-access-badge.has { color: var(--neon); background-color: rgba(var(--neon-rgb), 0.1); border-color: rgba(var(--neon-rgb), 0.3); }
 
 .pf-warning-tag {
   font-size: 0.7rem; color: #ffb020;
@@ -181,7 +181,7 @@
 .pf-access-box {
   margin-top: 12px; padding: 16px;
   background-color: var(--black);
-  border: 1px solid rgba(184,241,76,0.25);
+  border: 1px solid rgba(var(--neon-rgb), 0.25);
   border-radius: 12px;
   display: flex; flex-direction: column; gap: 14px;
   animation: fadeUp 0.25s ease-out;
@@ -192,7 +192,7 @@
 
 .pf-access-field input {
   background-color: var(--panel); border: 1px solid var(--border); border-radius: 9px;
-  padding: 9px 12px; color: #fff; font-size: 0.84rem; outline: none;
+  padding: 9px 12px; color: var(--white); font-size: 0.84rem; outline: none;
 }
 .pf-access-field input:focus { border-color: var(--neon); }
 
@@ -202,7 +202,7 @@
 .pf-access-btns { display: flex; gap: 10px; }
 
 .pf-access-save {
-  padding: 9px 18px; background-color: var(--neon); color: #0a0a0a; font-weight: 700;
+  padding: 9px 18px; background-color: var(--neon); color: var(--neon-ink, #0a0a0a); font-weight: 700;
   border-radius: 8px; font-size: 0.8rem; white-space: nowrap; flex-shrink: 0;
 }
 .pf-access-save:disabled { opacity: 0.6; }

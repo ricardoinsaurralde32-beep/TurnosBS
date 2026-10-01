@@ -28,13 +28,8 @@ function shortDate(key) {
 function baseSlots(pro, date) {
   const schedule = pro?.schedule || business.schedule;
   const ranges = schedule?.[date.getDay()] || [];
-  const step = business.slotMinutes;
-  const out = [];
-  for (const [from, to] of ranges) {
-    const end = toMin(to);
-    for (let t = toMin(from); t < end; t += step) out.push(toHHMM(t));
-  }
-  return out;
+  // Cada rango "desde-hasta" es UN turno (no se subdivide), igual que en Landing.jsx.
+  return ranges.map(([from]) => from).sort();
 }
 
 export default function Excepciones() {
@@ -46,10 +41,24 @@ export default function Excepciones() {
   const [bookedByTime, setBookedByTime] = useState({});
   const [loading, setLoading] = useState(true);
   const [flash, setFlash] = useState('');
+  const [confirming, setConfirming] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
 
   const showFlash = () => {
     setFlash('Guardado ✓');
     setTimeout(() => setFlash(''), 1600);
+  };
+
+  // Cada toque ya se guarda solo, al toque. Este botón es solo para que quede claro y tranquilice:
+  // vuelve a traer los bloqueos guardados desde el servidor y confirma que está todo al día.
+  const confirmSaved = async () => {
+    setConfirming(true);
+    setConfirmed(false);
+    const map = await fetchBlockedSlotsMap(session.professionalId);
+    setFullMap(map);
+    setConfirming(false);
+    setConfirmed(true);
+    setTimeout(() => setConfirmed(false), 2500);
   };
 
   useEffect(() => {
@@ -219,6 +228,13 @@ export default function Excepciones() {
       )}
 
       <p className="ex-note">Los cambios se aplican solo a tus turnos ({pro?.name}).</p>
+
+      <div className="ex-footer">
+        <button type="button" className="ex-save" onClick={confirmSaved} disabled={confirming}>
+          {confirming ? 'Guardando...' : confirmed ? 'Guardado ✓' : 'Guardar cambios'}
+        </button>
+        <p className="ex-footer-hint">Cada toque ya se guarda solo. Tocá acá si querés confirmar que está todo al día.</p>
+      </div>
     </div>
   );
 }

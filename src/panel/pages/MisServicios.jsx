@@ -29,23 +29,32 @@ export default function MisServicios() {
   const [editingId, setEditingId] = useState(null);
   const [editLabel, setEditLabel] = useState('');
   const [editPrice, setEditPrice] = useState('');
+  const [editShowPrice, setEditShowPrice] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newName, setNewName] = useState('');
   const [newPrice, setNewPrice] = useState('');
+  const [newShowPrice, setNewShowPrice] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Precio propio por servicio (puede ser distinto del precio del catálogo — cada
+  // profesional puede cobrar distinto por el mismo servicio). id -> texto del input.
+  const [myPrices, setMyPrices] = useState({});
+
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data: cat }, { data: myIds }, { data: bookings }] = await Promise.all([
+      const [{ data: cat }, { data: myServices }, { data: bookings }] = await Promise.all([
         fetchServicesCatalog(session.businessId),
         fetchProfessionalServiceIds(session.professionalId),
         fetchBookings()
       ]);
       setCatalog(cat);
-      setSelected(myIds);
+      setSelected(myServices.map((s) => s.id));
+      const priceMap = {};
+      myServices.forEach((s) => { if (s.price != null) priceMap[s.id] = String(s.price); });
+      setMyPrices(priceMap);
 
       const countMap = {};
       (bookings || [])
@@ -68,19 +77,26 @@ export default function MisServicios() {
     setSelected((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
   };
 
+  const setMyPrice = (id, value) => {
+    touch();
+    setMyPrices((prev) => ({ ...prev, [id]: value }));
+  };
+
   const startEdit = (service) => {
     setEditingId(service.id);
     setEditLabel(service.label);
     setEditPrice(service.price != null ? String(service.price) : '');
+    setEditShowPrice(!!service.show_price);
   };
   const saveEdit = async () => {
     if (!editLabel.trim()) return;
     touch();
     const label = editLabel.trim();
     const price = editPrice.trim() === '' ? null : Number(editPrice);
-    setCatalog((prev) => prev.map((s) => (s.id === editingId ? { ...s, label, price } : s)));
+    const show_price = editShowPrice;
+    setCatalog((prev) => prev.map((s) => (s.id === editingId ? { ...s, label, price, show_price } : s)));
     setEditingId(null);
-    await updateServiceReal(editingId, { label, price });
+    await updateServiceReal(editingId, { label, price, show_price });
   };
   const cancelEdit = () => setEditingId(null);
 
@@ -91,13 +107,14 @@ export default function MisServicios() {
     const label = newName.trim();
     const slug = slugify(label) || `servicio-${Date.now()}`;
     const price = newPrice.trim() === '' ? null : Number(newPrice);
-    const { data, error } = await insertServiceReal(session.businessId, slug, label, price);
+    const { data, error } = await insertServiceReal(session.businessId, slug, label, price, newShowPrice);
     if (!error && data) {
       setCatalog((prev) => [...prev, data]);
       setSelected((prev) => [...prev, data.id]);
     }
     setNewName('');
     setNewPrice('');
+    setNewShowPrice(false);
     setShowAddForm(false);
   };
 
@@ -111,7 +128,11 @@ export default function MisServicios() {
 
   const handleSave = async () => {
     setSaving(true);
-    await setProfessionalServicesReal(session.professionalId, selected);
+    const items = selected.map((id) => {
+      const raw = (myPrices[id] || '').trim();
+      return { id, price: raw === '' ? null : Number(raw) };
+    });
+    await setProfessionalServicesReal(session.professionalId, items);
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -137,8 +158,8 @@ export default function MisServicios() {
         </div>
         <p className="ms-hint">
           {isOwner
-            ? 'El precio es opcional. Se usa para el total que ve el cliente, si activás esa opción en Datos del negocio.'
-            : 'Este catálogo lo administra el dueño del negocio.'}
+            ? 'El precio de acá es el precio base del servicio. Si vos u otro profesional cobran distinto por el mismo servicio, lo pueden ajustar más abajo en "Qué ofrezco yo". "Mostrar en la web" controla si ese precio (y el total) se le muestra al cliente al reservar.'
+            : 'Este catálogo lo administra el dueño del negocio. Si cobrás distinto que el precio base, ajustalo en "Qué ofrezco yo".'}
         </p>
 
         {isOwner && showAddForm && (
@@ -152,6 +173,10 @@ export default function MisServicios() {
               value={newPrice} onChange={(e) => setNewPrice(e.target.value)}
               className="ms-price-input"
             />
+            <label className="ms-show-price">
+              <input type="checkbox" checked={newShowPrice} onChange={(e) => setNewShowPrice(e.target.checked)} />
+              Mostrar en la web
+            </label>
             <button type="submit" className="ms-add-submit">Agregar</button>
           </form>
         )}
@@ -171,6 +196,10 @@ export default function MisServicios() {
                     type="number" className="ms-edit-price" placeholder="Precio" min="0"
                     value={editPrice} onChange={(e) => setEditPrice(e.target.value)}
                   />
+                  <label className="ms-show-price">
+                    <input type="checkbox" checked={editShowPrice} onChange={(e) => setEditShowPrice(e.target.checked)} />
+                    Mostrar en la web
+                  </label>
                   <button type="button" className="ms-mini-btn ms-mini-ok" onClick={saveEdit}>Guardar</button>
                   <button type="button" className="ms-mini-btn" onClick={cancelEdit}>Cancelar</button>
                 </>
@@ -184,6 +213,9 @@ export default function MisServicios() {
                 <>
                   <span className="ms-catalog-label">{service.label}</span>
                   {service.price != null && <span className="ms-price-tag">{formatPrice(service.price)}</span>}
+                  <span className={`ms-visibility-tag ${service.show_price ? 'on' : ''}`}>
+                    {service.show_price ? 'Visible en la web' : 'Oculto para el cliente'}
+                  </span>
                   <button type="button" className="ms-mini-btn" onClick={() => startEdit(service)}>Editar</button>
                   <button type="button" className="ms-mini-btn ms-mini-danger" onClick={() => setConfirmDeleteId(service.id)}>Eliminar</button>
                 </>
@@ -195,21 +227,31 @@ export default function MisServicios() {
 
       <div className="ms-section">
         <h2>Qué ofrezco yo</h2>
+        <p className="ms-hint">
+          Si dejás el precio en blanco, se usa el precio base del catálogo de arriba. Cargalo solo si vos cobrás distinto por ese servicio.
+        </p>
         <div className="ms-list">
           {catalog.map((service) => {
             const active = selected.includes(service.id);
             const count = counts[service.id] || 0;
             return (
-              <button
-                key={service.id} type="button"
-                className={`ms-card ${active ? 'active' : ''}`}
-                onClick={() => toggle(service.id)}
-              >
-                <span className="ms-check">{active && '✓'}</span>
-                <span className="ms-label">{service.label}</span>
-                {service.price != null && <span className="ms-price-tag">{formatPrice(service.price)}</span>}
-                {count > 0 && <span className="ms-count">{count} turnos</span>}
-              </button>
+              <div key={service.id} className={`ms-card ${active ? 'active' : ''}`}>
+                <button type="button" className="ms-card-toggle" onClick={() => toggle(service.id)}>
+                  <span className="ms-check">{active && '✓'}</span>
+                  <span className="ms-label">{service.label}</span>
+                  {service.price != null && <span className="ms-price-tag">{formatPrice(service.price)}</span>}
+                  {count > 0 && <span className="ms-count">{count} turnos</span>}
+                </button>
+                {active && (
+                  <input
+                    type="number" min="0" className="ms-my-price"
+                    placeholder={service.price != null ? `Precio base: ${formatPrice(service.price)}` : 'Mi precio (opcional)'}
+                    value={myPrices[service.id] || ''}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => setMyPrice(service.id, e.target.value)}
+                  />
+                )}
+              </div>
             );
           })}
         </div>

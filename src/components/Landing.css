@@ -1,4 +1,7 @@
-.page { min-height: 100vh; overflow-x: hidden; position: relative; }
+/* color acá (no solo background-color) es importante: así cualquier texto de más abajo
+   que no declare su propio color hereda el --white de ESTA página (que puede ser oscuro
+   en modo claro), en vez de quedarse pegado al --white oscuro por defecto del <body>. */
+.page { min-height: 100vh; overflow-x: hidden; position: relative; background-color: var(--black); color: var(--white); }
 
 /* ================= AMBIENTE DE FONDO ================= */
 .ambient {
@@ -13,7 +16,7 @@
   position: absolute;
   border-radius: 50%;
   filter: blur(55px);
-  background: radial-gradient(circle, rgba(184,241,76,0.30), transparent 70%);
+  background: radial-gradient(circle, rgba(var(--neon-rgb), 0.30), transparent 70%);
   will-change: transform, opacity;
 }
 
@@ -32,12 +35,15 @@
 
 /* ================= HERO ================= */
 .hero {
+  /* Sigue al modo de fondo del negocio (antes quedaba SIEMPRE negro, fijo,
+     lo que dejaba una franja negra arriba de todo en modo claro). */
   background: linear-gradient(
     to bottom,
-    #000 0%,
-    #000 82%,
-    rgba(10,10,10,0) 100%
+    var(--black) 0%,
+    var(--black) 82%,
+    transparent 100%
   );
+  color: var(--white);
 }
 
 /* Logo centrado como badge/wordmark, no a todo el ancho:
@@ -52,7 +58,7 @@
   max-width: 300px;
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 0 24px rgba(184,241,76,0.28));
+  filter: drop-shadow(0 0 24px rgba(var(--neon-rgb), 0.28));
 }
 
 .neon-line {
@@ -62,6 +68,8 @@
   box-shadow: 0 0 14px var(--neon), 0 0 34px var(--neon-soft);
   overflow: hidden;
 }
+/* Mismo motivo que el botón: el halo grande de neón se ve raro sobre fondo claro */
+.page.theme-light .neon-line { box-shadow: 0 0 6px var(--neon); }
 .neon-line span {
   position: absolute; inset: 0;
   background: linear-gradient(90deg, transparent, #fff, transparent);
@@ -90,8 +98,7 @@
   letter-spacing: 0.01em;
   max-width: 400px;
   margin: 0 auto 22px;
-  color: var(--white);
-  text-shadow: 0 0 18px rgba(184,241,76,0.22);
+  text-shadow: 0 0 18px rgba(var(--neon-rgb), 0.22);
 }
 
 /* Fecha en píldora: display flex (no inline) para que SIEMPRE
@@ -103,9 +110,9 @@
   gap: 8px;
   margin: 0 auto 30px;
   padding: 8px 20px;
-  border: 1px solid rgba(184,241,76,0.35);
+  border: 1px solid rgba(var(--neon-rgb), 0.35);
   border-radius: 999px;
-  background-color: rgba(184,241,76,0.05);
+  background-color: rgba(var(--neon-rgb), 0.05);
   color: var(--neon);
   font-family: 'Recursive', sans-serif;
   font-weight: 700;
@@ -119,7 +126,7 @@
   position: relative;
   overflow: hidden;
   background-color: var(--neon);
-  color: #0a0a0a;
+  color: var(--neon-ink, #0a0a0a);
   font-weight: 800; font-style: italic; text-transform: uppercase;
   font-size: 1.3rem; letter-spacing: 0.6px;
   padding: 17px 54px;
@@ -130,16 +137,25 @@
 .btn-cta:hover  { transform: translateY(-3px) scale(1.04); animation-play-state: paused; }
 .btn-cta:active { transform: scale(0.97); }
 
+/* El latido de neón (glow que crece y se desvanece) está pensado para un fondo
+   oscuro tipo "luz de neón en la noche" — contra un fondo claro se ve como un
+   halo fosforescente raro en vez de un efecto lindo. En modo claro se saca la
+   animación y se deja solo una sombra chica y fija, más prolija. */
+.page.theme-light .btn-cta {
+  animation: none;
+  box-shadow: 0 6px 18px rgba(var(--neon-rgb), 0.28);
+}
+
 .btn-cta-shine {
   position: absolute; top: 0; left: -60%;
   width: 55%; height: 100%;
-  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.75), transparent);
+  background: linear-gradient(100deg, transparent, rgba(var(--overlay-rgb), 0.75), transparent);
   animation: ctaShine 2.8s ease-in-out infinite;
 }
 
 @keyframes ctaBeat {
-  0%,100% { box-shadow: 0 0 0 0 rgba(184,241,76,0.55), 0 0 22px var(--neon-soft); }
-  50%     { box-shadow: 0 0 0 18px rgba(184,241,76,0), 0 0 44px var(--neon); }
+  0%,100% { box-shadow: 0 0 0 0 rgba(var(--neon-rgb), 0.55), 0 0 22px var(--neon-soft); }
+  50%     { box-shadow: 0 0 0 18px rgba(var(--neon-rgb), 0), 0 0 44px var(--neon); }
 }
 @keyframes ctaShine {
   0%   { left: -60%; }
@@ -165,14 +181,14 @@
 /* ================= BOTONES ================= */
 .btn-neon {
   background-color: var(--neon);
-  color: #0a0a0a;
+  color: var(--neon-ink, #0a0a0a);
   font-weight: 800; font-style: italic; text-transform: uppercase;
   font-size: 1.15rem; letter-spacing: 0.6px;
   padding: 15px 46px; border-radius: 999px;
   transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
   animation: glowPulse 3s ease-in-out infinite;
 }
-.btn-neon:hover  { transform: translateY(-3px) scale(1.03); background-color: #c8ff5e; }
+.btn-neon:hover  { transform: translateY(-3px) scale(1.03); background-color: var(--neon-hover, #c8ff5e); }
 .btn-neon:active { transform: translateY(0) scale(0.98); }
 .btn-sm { font-size: 0.92rem; padding: 10px 30px; }
 
@@ -190,7 +206,7 @@
   font-size: clamp(1.5rem, 6vw, 2rem);
   font-weight: 800; text-transform: uppercase;
   line-height: 1.15; margin-bottom: 10px;
-  text-shadow: 0 0 26px rgba(184,241,76,0.35);
+  text-shadow: 0 0 26px rgba(var(--neon-rgb), 0.35);
 }
 
 .section-sub {
@@ -200,13 +216,14 @@
 
 /* ================= AVISO IMPORTANTE ================= */
 .policy-notice {
-  background-color: rgba(184,241,76,0.05);
-  border: 1px solid rgba(184,241,76,0.25);
+  background-color: rgba(var(--neon-rgb), 0.09);
+  border: 1px solid rgba(var(--neon-rgb), 0.4);
   border-left: 4px solid var(--neon);
   border-radius: 12px;
   padding: 16px 18px;
   margin-bottom: 22px;
   text-align: left;
+  box-shadow: 0 2px 14px rgba(var(--overlay-rgb), 0.06);
 }
 .policy-notice strong {
   display: block;
@@ -269,6 +286,13 @@
 .pro-photo img { width: 100%; height: 100%; object-fit: cover; }
 .pro-initial { font-size: 3rem; font-weight: 800; color: var(--neon); }
 
+/* Mismo criterio que el botón/línea de arriba: el halo de neón grande alrededor
+   de la foto (pensado para destacar contra un fondo oscuro) se ve como un aro
+   fosforescente raro sobre fondo claro. En claro queda un borde fino, sin halo. */
+.page.theme-light .pro-orbit span { box-shadow: 0 0 4px var(--neon); }
+.page.theme-light .pro-photo { box-shadow: none; }
+.page.theme-light .pro-card.active .pro-photo { box-shadow: 0 0 10px rgba(var(--neon-rgb), 0.35); }
+
 .pro-name {
   font-family: 'Playfair Display', serif; font-style: italic;
   font-size: 1.3rem; text-transform: uppercase; margin-bottom: 6px;
@@ -283,12 +307,12 @@
   width: 28px; height: 28px;
   display: flex; align-items: center; justify-content: center;
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.14);
-  background-color: rgba(255,255,255,0.04);
+  border: 1px solid rgba(var(--overlay-rgb), 0.14);
+  background-color: rgba(var(--overlay-rgb), 0.04);
   color: var(--gray);
   transition: all 0.25s ease;
 }
-.pro-social:hover { transform: translateY(-3px) scale(1.12); color: #fff; }
+.pro-social:hover { transform: translateY(-3px) scale(1.12); color: var(--white); }
 .pro-social.ft-instagram:hover {
   border-color: #e1306c;
   background-color: rgba(225,48,108,0.2);
@@ -309,7 +333,7 @@
 .quick-days { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 22px 0 26px; }
 
 .chip-day {
-  background-color: var(--neon); color: #0a0a0a;
+  background-color: var(--neon); color: var(--neon-ink, #0a0a0a);
   font-weight: 800; font-style: italic; text-transform: uppercase;
   font-size: 0.85rem; padding: 9px 24px; border-radius: 999px;
   box-shadow: 0 0 16px var(--neon-soft);
@@ -354,14 +378,14 @@
 }
 
 .slot:hover {
-  background-color: var(--neon); color: #0a0a0a;
+  background-color: var(--neon); color: var(--neon-ink, #0a0a0a);
   box-shadow: 0 0 26px var(--neon-soft); transform: translateY(-3px);
 }
 .slot.glow:not(.active) {
-  background-color: var(--neon); color: #0a0a0a;
+  background-color: var(--neon); color: var(--neon-ink, #0a0a0a);
   box-shadow: 0 0 26px var(--neon-soft); transform: translateY(-3px);
 }
-.slot.active { background-color: var(--neon); color: #0a0a0a; box-shadow: 0 0 32px var(--neon); }
+.slot.active { background-color: var(--neon); color: var(--neon-ink, #0a0a0a); box-shadow: 0 0 32px var(--neon); }
 
 /* ===== Onda expansiva neón =====
    Sale de un horario y recorre la grilla: cada botón destella (::before, debajo del texto)
@@ -424,7 +448,7 @@
   width: fit-content;
   border: 1px solid var(--neon);
   border-radius: 999px;
-  background-color: rgba(184,241,76,0.07);
+  background-color: rgba(var(--neon-rgb), 0.07);
   font-size: 0.82rem; font-weight: 600; color: var(--neon);
   text-transform: uppercase; letter-spacing: 0.4px;
 }
@@ -438,18 +462,18 @@
   display: inline-flex; align-items: center; gap: 7px;
   padding: 9px 18px;
   border-radius: 999px;
-  border: 1px solid rgba(184,241,76,0.3);
-  background-color: rgba(184,241,76,0.06);
+  border: 1px solid rgba(var(--neon-rgb), 0.3);
+  background-color: rgba(var(--neon-rgb), 0.06);
   color: var(--gray);
   font-size: 0.8rem; font-weight: 600;
   transition: all 0.28s ease;
 }
 .place-btn svg { color: var(--neon); transition: transform 0.28s ease; }
 .place-btn:hover {
-  color: #fff;
+  color: var(--white);
   border-color: var(--neon);
-  background-color: rgba(184,241,76,0.14);
-  box-shadow: 0 0 20px rgba(184,241,76,0.22);
+  background-color: rgba(var(--neon-rgb), 0.14);
+  box-shadow: 0 0 20px rgba(var(--neon-rgb), 0.22);
   transform: translateY(-2px);
 }
 .place-btn:hover svg { transform: scale(1.15); }
@@ -497,7 +521,7 @@
 .chip-service:hover { border-color: var(--neon); transform: translateY(-2px); }
 .chip-service.active {
   background-color: var(--neon); border-color: var(--neon);
-  color: #0a0a0a; font-weight: 800; box-shadow: 0 0 20px var(--neon-soft);
+  color: var(--neon-ink, #0a0a0a); font-weight: 800; box-shadow: 0 0 20px var(--neon-soft);
 }
 
 .upload-box {
@@ -505,20 +529,20 @@
   align-items: center; justify-content: center;
   gap: 5px;
   padding: 22px 16px;
-  border: 2px dashed rgba(184,241,76,0.32);
+  border: 2px dashed rgba(var(--neon-rgb), 0.32);
   border-radius: 14px;
-  background-color: rgba(184,241,76,0.04);
+  background-color: rgba(var(--neon-rgb), 0.04);
   color: var(--gray);
   cursor: pointer;
   transition: all 0.28s ease;
 }
 .upload-box svg { color: var(--neon); transition: transform 0.3s ease; }
 .upload-box span { font-size: 0.86rem; font-weight: 600; color: var(--white); }
-.upload-box small { font-size: 0.7rem; color: #6a6a6a; }
+.upload-box small { font-size: 0.7rem; color: var(--gray); }
 .upload-box:hover {
   border-color: var(--neon);
-  background-color: rgba(184,241,76,0.09);
-  box-shadow: 0 0 22px rgba(184,241,76,0.16);
+  background-color: rgba(var(--neon-rgb), 0.09);
+  box-shadow: 0 0 22px rgba(var(--neon-rgb), 0.16);
 }
 .upload-box:hover svg { transform: translateY(-3px) scale(1.08); }
 
@@ -526,9 +550,9 @@
   position: relative;
   display: flex; align-items: center; gap: 12px;
   padding: 10px;
-  border: 1px solid rgba(184,241,76,0.3);
+  border: 1px solid rgba(var(--neon-rgb), 0.3);
   border-radius: 14px;
-  background-color: rgba(184,241,76,0.05);
+  background-color: rgba(var(--neon-rgb), 0.05);
   animation: fadeUp 0.35s ease-out both;
 }
 .upload-preview img {
@@ -536,27 +560,27 @@
   border-radius: 10px;
   object-fit: cover;
   flex-shrink: 0;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(var(--overlay-rgb), 0.1);
 }
 .upload-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .upload-name {
   color: var(--white); font-size: 0.82rem; font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.upload-size { color: #6a6a6a; font-size: 0.72rem; }
+.upload-size { color: var(--gray); font-size: 0.72rem; }
 
 .upload-remove {
   width: 28px; height: 28px;
   display: flex; align-items: center; justify-content: center;
   border-radius: 50%;
-  background: rgba(255,255,255,0.06);
+  background: rgba(var(--overlay-rgb), 0.06);
   color: var(--gray);
   flex-shrink: 0;
   transition: all 0.25s ease;
 }
 .upload-remove:hover {
   background: rgba(255,107,107,0.2);
-  color: #fff;
+  color: var(--white);
   transform: rotate(90deg);
 }
 
@@ -610,7 +634,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 9px 16px;
-  color: #fff;
+  color: var(--white);
   font-size: 0.86rem;
   outline: none;
 }
@@ -633,16 +657,16 @@
   position: relative;
   flex: 0 0 250px;
   scroll-snap-align: start;
-  background: linear-gradient(165deg, rgba(184,241,76,0.07), rgba(184,241,76,0.02));
-  border: 1px solid rgba(184,241,76,0.2);
+  background: linear-gradient(165deg, rgba(var(--neon-rgb), 0.07), rgba(var(--neon-rgb), 0.02));
+  border: 1px solid rgba(var(--neon-rgb), 0.2);
   border-radius: 18px;
   padding: 22px 18px 18px;
   transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .review-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(184,241,76,0.4);
-  box-shadow: 0 10px 26px rgba(184,241,76,0.12);
+  border-color: rgba(var(--neon-rgb), 0.4);
+  box-shadow: 0 10px 26px rgba(var(--neon-rgb), 0.12);
 }
 
 .review-quote {
@@ -650,14 +674,14 @@
   top: 6px; left: 14px;
   font-size: 3rem;
   font-family: 'Playfair Display', serif;
-  color: rgba(184,241,76,0.18);
+  color: rgba(var(--neon-rgb), 0.18);
   line-height: 1;
   pointer-events: none;
 }
 
 .review-stars { display: flex; gap: 2px; margin-bottom: 10px; }
 .review-star { color: var(--gray-darker); font-size: 1.05rem; }
-.review-star.on { color: var(--neon); text-shadow: 0 0 8px rgba(184,241,76,0.5); }
+.review-star.on { color: var(--neon); text-shadow: 0 0 8px rgba(var(--neon-rgb), 0.5); }
 
 .review-comment {
   color: var(--white);
@@ -672,7 +696,7 @@
   align-items: center;
   gap: 9px;
   padding-top: 12px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(var(--overlay-rgb), 0.06);
   color: var(--gray);
   font-size: 0.76rem;
 }
@@ -680,8 +704,8 @@
 .review-avatar {
   width: 26px; height: 26px;
   border-radius: 50%;
-  background-color: rgba(184,241,76,0.14);
-  border: 1px solid rgba(184,241,76,0.3);
+  background-color: rgba(var(--neon-rgb), 0.14);
+  border: 1px solid rgba(var(--neon-rgb), 0.3);
   color: var(--neon);
   display: flex; align-items: center; justify-content: center;
   font-size: 0.72rem; font-weight: 800;
@@ -699,14 +723,14 @@
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 16px;
   border-radius: 999px;
-  border: 1px solid rgba(184,241,76,0.3);
-  background-color: rgba(184,241,76,0.06);
+  border: 1px solid rgba(var(--neon-rgb), 0.3);
+  background-color: rgba(var(--neon-rgb), 0.06);
   color: var(--neon);
   font-size: 0.74rem; font-weight: 700;
   margin-bottom: 10px;
   transition: all 0.2s ease;
 }
-.pro-portfolio-btn:hover { background-color: rgba(184,241,76,0.14); }
+.pro-portfolio-btn:hover { background-color: rgba(var(--neon-rgb), 0.14); }
 
 .total-box {
   display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -714,7 +738,7 @@
   padding: 10px 20px;
   border: 1px solid var(--neon);
   border-radius: 999px;
-  background-color: rgba(184,241,76,0.07);
+  background-color: rgba(var(--neon-rgb), 0.07);
   width: fit-content;
   margin-left: auto; margin-right: auto;
 }
@@ -726,5 +750,5 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #0a0a0a;
+  background-color: var(--black);
 }

@@ -16,35 +16,47 @@ export async function fetchBusinessData(slug) {
 
   const { data: services, error: servicesError } = await supabase
     .from('services')
-    .select('id, slug, label, price')
+    .select('id, slug, label, price, show_price')
     .eq('business_id', biz.id);
   if (servicesError) return { data: null, error: servicesError };
 
   const { data: professionals, error: proError } = await supabase
     .from('professionals')
-    .select('id, slug, name, role, photo_url, description, socials, workspace_photos, portfolio_photos, schedule, is_owner, professional_services(service_id)')
+    .select('id, slug, name, role, photo_url, description, socials, workspace_photos, portfolio_photos, schedule, is_owner, professional_services(service_id, price)')
     .eq('business_id', biz.id);
   if (proError) return { data: null, error: proError };
 
   const serviceIdToSlug = {};
   services.forEach((s) => { serviceIdToSlug[s.id] = s.slug; });
 
-  const shapedProfessionals = professionals.map((p) => ({
-    id: p.id,
-    slug: p.slug,
-    name: p.name,
-    role: p.role,
-    photo: p.photo_url,
-    description: p.description,
-    socials: p.socials || [],
-    workspacePhotos: p.workspace_photos || [],
-    portfolio: p.portfolio_photos || [],
-    schedule: p.schedule || null,
-    isOwner: p.is_owner,
-    services: (p.professional_services || [])
-      .map((ps) => serviceIdToSlug[ps.service_id])
-      .filter(Boolean)
-  }));
+  const shapedProfessionals = professionals.map((p) => {
+    const psRows = p.professional_services || [];
+    // Cada profesional puede cobrar distinto por el mismo servicio (ej: Richard y Omar
+    // con precios distintos para el mismo corte). Si no cargó un precio propio para ese
+    // servicio, se usa el precio del catálogo del negocio como base.
+    const servicePrices = {};
+    psRows.forEach((ps) => {
+      if (ps.price != null) {
+        const slug = serviceIdToSlug[ps.service_id];
+        if (slug) servicePrices[slug] = ps.price;
+      }
+    });
+    return {
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      role: p.role,
+      photo: p.photo_url,
+      description: p.description,
+      socials: p.socials || [],
+      workspacePhotos: p.workspace_photos || [],
+      portfolio: p.portfolio_photos || [],
+      schedule: p.schedule || null,
+      isOwner: p.is_owner,
+      services: psRows.map((ps) => serviceIdToSlug[ps.service_id]).filter(Boolean),
+      servicePrices
+    };
+  });
 
   const shapedBusiness = {
     id: biz.id,
@@ -60,17 +72,24 @@ export async function fetchBusinessData(slug) {
     hoursText: biz.hours_text || [],
     minHoursAhead: biz.min_hours_ahead,
     slotMinutes: biz.slot_minutes,
+    // Negocio suspendido o que todavía no cargó tarjeta: la página pública no toma turnos.
+    // (La base también lo bloquea con un trigger, esto es solo para mostrar un aviso claro.)
+    bookingsPaused: !biz.billing_exempt && (biz.suspended === true || biz.card_confirmed === false),
     schedule: biz.schedule || {},
+    colorScheme: biz.color_scheme || 'mono',
+    customColors: biz.custom_colors || null,
+    themeMode: biz.theme_mode || 'dark',
     placePhotos: biz.place_photos || [],
     socials: biz.socials || [],
     platform: { name: biz.platform_name, url: biz.platform_url },
     features: { referencePhoto: biz.feature_reference_photo },
-    pricesEnabled: !!biz.prices_enabled,
     reminders: {
       r1: { enabled: !!biz.reminder1_enabled, minutes: biz.reminder1_minutes },
       r2: { enabled: !!biz.reminder2_enabled, minutes: biz.reminder2_minutes }
     },
-    services: services.map((s) => ({ id: s.slug, label: s.label, price: s.price })),
+    // "Mostrar precio" ya no es un interruptor único para todo el negocio: ahora se
+    // elige servicio por servicio, en "Mis servicios" (showPrice, columna show_price).
+    services: services.map((s) => ({ id: s.slug, label: s.label, price: s.price, showPrice: !!s.show_price })),
     professionals: shapedProfessionals
   };
 
@@ -266,9 +285,9 @@ export async function fetchServicesCatalog(businessId) {
   return { data: data || [], error };
 }
 
-export async function insertServiceReal(businessId, slug, label, price = null) {
+export async function insertServiceReal(businessId, slug, label, price = null, showPrice = false) {
   const { data, error } = await supabase
-    .from('services').insert({ business_id: businessId, slug, label, price }).select().single();
+    .from('services').insert({ business_id: businessId, slug, label, price, show_price: showPrice }).select().single();
   return { data, error };
 }
 
@@ -282,16 +301,19 @@ export async function deleteServiceReal(serviceId) {
   return { error };
 }
 
+/** Devuelve { id: service_id, price: precio propio o null } por cada servicio que
+ *  ofrece el profesional — price null significa "uso el precio del catálogo". */
 export async function fetchProfessionalServiceIds(professionalId) {
   const { data, error } = await supabase
-    .from('professional_services').select('service_id').eq('professional_id', professionalId);
-  return { data: (data || []).map((r) => r.service_id), error };
+    .from('professional_services').select('service_id, price').eq('professional_id', professionalId);
+  return { data: (data || []).map((r) => ({ id: r.service_id, price: r.price })), error };
 }
 
-export async function setProfessionalServicesReal(professionalId, serviceIds) {
+/** items: [{ id: service_id, price: número o null (usa el precio del catálogo) }] */
+export async function setProfessionalServicesReal(professionalId, items) {
   await supabase.from('professional_services').delete().eq('professional_id', professionalId);
-  if (serviceIds.length === 0) return { error: null };
-  const rows = serviceIds.map((sid) => ({ professional_id: professionalId, service_id: sid }));
+  if (items.length === 0) return { error: null };
+  const rows = items.map((it) => ({ professional_id: professionalId, service_id: it.id, price: it.price ?? null }));
   const { error } = await supabase.from('professional_services').insert(rows);
   return { error };
 }
@@ -388,6 +410,78 @@ export async function callManageStaff(action, payload) {
   return { data, error };
 }
 
+// ============ SUSCRIPCIÓN DEL NEGOCIO (Mercado Pago) ============
+
+export async function fetchMySubscription(businessId) {
+  const { data, error } = await supabase
+    .from('businesses')
+    .select('subscription_status, trial_ends_at, suspended, suspended_reason, mp_payer_email, billing_exempt, card_confirmed, trial_consumed, next_payment_at, access_until, payment_failures, mp_card_brand, mp_card_last4, plans(name, price_ars, trial_days)')
+    .eq('id', businessId)
+    .single();
+  return { data, error };
+}
+
+/** Crea (o recrea) la suscripción en Mercado Pago y devuelve el link de pago (init_point)
+ *  al que hay que mandar al dueño del negocio para que cargue su tarjeta. */
+/** Traduce los errores de Mercado Pago a un mensaje claro en español para el dueño. */
+function friendlyMpError(raw) {
+  const t = String(raw || '').toLowerCase();
+  if (t.includes('rate_limited') || t.includes('too many')) {
+    return 'Mercado Pago recibió demasiados intentos seguidos. Esperá unos minutos y probá de nuevo, una sola vez.';
+  }
+  if (t.includes('both payer and collector')) {
+    return 'La cuenta con la que pagás y la cuenta que cobra no son compatibles (una es de prueba y la otra real). Avisale a soporte de TurnosBS.';
+  }
+  if (t.includes('same user') || t.includes('cannot be the same')) {
+    return 'No podés pagar con la misma cuenta de Mercado Pago que recibe los cobros. Entrá con otra cuenta.';
+  }
+  if (t.includes('card') || t.includes('tarjeta')) {
+    return 'Mercado Pago no aceptó la tarjeta. Probá con otra tarjeta o revisá los datos.';
+  }
+  return 'No pudimos conectar con Mercado Pago en este momento. Probá de nuevo en unos minutos.';
+}
+
+export async function createMpSubscription() {
+  const { data, error } = await supabase.functions.invoke('mp-create-subscription', { body: {} });
+  let detail = data?.error || null;
+  // Con un 400/500 supabase-js no deja el cuerpo en `data`: hay que leerlo de error.context
+  if (error && !detail && error.context && typeof error.context.json === 'function') {
+    try {
+      const body = await error.context.json();
+      detail = body?.error || body?.message || JSON.stringify(body);
+    } catch { /* sin cuerpo legible */ }
+  }
+  if (detail) console.error('mp-create-subscription:', detail);
+  return {
+    initPoint: data?.init_point || null,
+    error: error || detail ? new Error(friendlyMpError(detail || error.message)) : null
+  };
+}
+
+/** Cancela la suscripción del negocio en Mercado Pago (no se cobra más). */
+export async function cancelMpSubscription() {
+  const { data, error } = await supabase.functions.invoke('mp-cancel-subscription', { body: {} });
+  let detail = data?.error || null;
+  if (error && !detail && error.context && typeof error.context.json === 'function') {
+    try {
+      const body = await error.context.json();
+      detail = body?.error || body?.message || null;
+    } catch { /* sin cuerpo legible */ }
+  }
+  if (detail) console.error('mp-cancel-subscription:', detail);
+  return {
+    ok: !!data?.ok,
+    error: error || detail ? new Error('No pudimos cancelar la suscripción en este momento. Probá de nuevo en unos minutos.') : null
+  };
+}
+
+/** Red de seguridad: le pregunta a Mercado Pago el estado real de la suscripción del
+ *  negocio (por si el webhook no llegó todavía) y actualiza la base si hace falta. */
+export async function syncMpSubscription() {
+  const { data, error } = await supabase.functions.invoke('mp-sync-subscription', { body: {} });
+  return { synced: !!data?.synced, error: error || null };
+}
+
 export async function fetchStaffForBusiness(businessId) {
   const { data, error } = await supabase.from('staff').select('id, role, professional_id').eq('business_id', businessId);
   return { data: data || [], error };
@@ -415,4 +509,13 @@ export async function cancelBookingByCode(businessId, code) {
   });
   if (error) return { success: false, error };
   return { success: !!data, error: null };
+}
+
+// ============ SUSCRIPTORES DEL SAAS (solo Richard) ============
+// El chequeo real de "quién puede ver esto" vive en el servidor (RPC get_subscribers_overview,
+// security definer): rechaza a cualquiera que no sea el dueño de Barber Studio. La pantalla
+// del panel además oculta el link y redirige, pero eso es solo comodidad de UI.
+export async function fetchSubscribersOverview() {
+  const { data, error } = await supabase.rpc('get_subscribers_overview');
+  return { data: data || [], error };
 }

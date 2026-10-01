@@ -1,6 +1,13 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Landing from './components/Landing';
 import BajaRecordatorios from './components/BajaRecordatorios';
+import ScrollToTop from './ScrollToTop';
+import SignUp from './auth/SignUp';
+import SignIn from './auth/SignIn';
+import NewBusiness from './auth/NewBusiness';
+import AuthCallback from './auth/AuthCallback';
+import PlatformHome from './pages/PlatformHome';
+import Terminos from './pages/Terminos';
 import { PanelAuthProvider, usePanelAuth } from './panel/PanelAuthContext';
 import PanelLogin from './panel/PanelLogin';
 import PanelLayout from './panel/PanelLayout';
@@ -18,17 +25,31 @@ import Profesionales from './panel/pages/Profesionales';
 import Fidelizacion from './panel/pages/Fidelizacion';
 import Bloqueados from './panel/pages/Bloqueados';
 import DatosNegocio from './panel/pages/DatosNegocio';
+import Suscripcion from './panel/pages/Suscripcion';
+import Suscriptores from './panel/pages/Suscriptores';
 import './styles/main.css';
+
+// Único negocio que puede ver el panel de suscriptores del SaaS (Richard, dueño de Barber Studio).
+// El chequeo que realmente importa es del lado del servidor (RPC get_subscribers_overview);
+// esto es solo para no mostrar el link a nadie más.
+const PLATFORM_ADMIN_BUSINESS_ID = '24b520a2-ce47-4ac9-a00e-99e49eafc0fe';
 
 function RequirePanelAuth({ children }) {
   const { session, loading } = usePanelAuth();
   if (loading) return <div className="pnl-loading">Cargando...</div>;
-  if (!session) return <Navigate to="/panel/login" replace />;
+  if (!session) return <Navigate to="/ingresar" replace />;
   return children;
 }
 function RequireOwner({ children }) {
   const { session } = usePanelAuth();
   if (session?.role !== 'owner') return <Navigate to="/panel/dashboard" replace />;
+  return children;
+}
+function RequirePlatformAdmin({ children }) {
+  const { session } = usePanelAuth();
+  if (session?.role !== 'owner' || session?.businessId !== PLATFORM_ADMIN_BUSINESS_ID) {
+    return <Navigate to="/panel/dashboard" replace />;
+  }
   return children;
 }
 
@@ -59,20 +80,39 @@ function PanelRoutes() {
         <Route path="fidelizacion" element={<RequireOwner><Fidelizacion /></RequireOwner>} />
         <Route path="bloqueados" element={<RequireOwner><Bloqueados /></RequireOwner>} />
         <Route path="negocio" element={<RequireOwner><DatosNegocio /></RequireOwner>} />
-        <Route path="*" element={<Navigate to="dashboard" replace />} />
+        <Route path="suscripcion" element={<RequireOwner><Suscripcion /></RequireOwner>} />
+        <Route path="suscriptores" element={<RequirePlatformAdmin><Suscriptores /></RequirePlatformAdmin>} />
+        <Route path="*" element={<Navigate to="/panel/dashboard" replace />} />
       </Route>
     </Routes>
   );
+}
+
+// La raíz muestra la home de la plataforma, salvo que sea un link o QR viejo
+// de reserva (ya impreso, apuntando a "/") — ahí muestra la página de Barber Studio,
+// que es el único negocio que tuvo esa dirección antes de que existiera esta home.
+function RootRoute() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const isLegacyBookingLink = ['prof', 'quick', 'date', 'turno'].some((k) => params.has(k));
+  return isLegacyBookingLink ? <Landing /> : <PlatformHome />;
 }
 
 export default function App() {
   return (
     <BrowserRouter>
       <PanelAuthProvider>
+        <ScrollToTop />
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<RootRoute />} />
           <Route path="/baja" element={<BajaRecordatorios />} />
+          <Route path="/terminos" element={<Terminos />} />
+          <Route path="/registro" element={<SignUp />} />
+          <Route path="/ingresar" element={<SignIn />} />
+          <Route path="/nuevo-negocio" element={<NewBusiness />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/panel/*" element={<PanelRoutes />} />
+          <Route path="/:slug" element={<Landing />} />
         </Routes>
       </PanelAuthProvider>
     </BrowserRouter>

@@ -5,14 +5,24 @@
   --panel: #111111;
   --panel-2: #171717;
   --neon: #b8f14c;
-  --neon-soft: rgba(184, 241, 76, 0.35);
-  --neon-dim: rgba(184, 241, 76, 0.12);
+  --neon-rgb: 184, 241, 76;
+  --neon-soft: rgba(var(--neon-rgb), 0.35);
+  --neon-dim: rgba(var(--neon-rgb), 0.12);
+  --neon-hover: #c8ff5e;
   --white: #f4f4f4;
   --gray: #9a9a9a;
   --gray-dark: #4a4a4a;
   --gray-darker: #2a2a2a;
   --border: #262626;
   --danger: #ff6b6b;
+  /* Base para superficies "resaltado sutil" (bordes finos, fondos de hover, etc.):
+     en oscuro es blanco translúcido, en claro se invierte a negro translúcido. */
+  --overlay-rgb: 255, 255, 255;
+  /* Color de texto/ícono que va ARRIBA de un fondo de color --neon (botones, chips,
+     insignias). Por defecto oscuro porque el acento suele ser un color claro/vivo.
+     El esquema "Blanco y negro" en modo claro invierte su --neon a un tono oscuro,
+     así que ahí pisa esto a blanco (ver colorSchemes.js) para que el texto se siga viendo. */
+  --neon-ink: #0a0a0a;
 }
 
 html, body, #root { min-height: 100%; }
@@ -107,7 +117,7 @@ a { text-decoration: none; }
   border-radius: 50%;
   background:
     radial-gradient(circle at 50% 1.5px, #eaffc2 0 1.5px, transparent 2.2px),
-    conic-gradient(from 0deg, transparent 0 8%, rgba(184,241,76,0.12) 30%, var(--neon));
+    conic-gradient(from 0deg, transparent 0 8%, rgba(var(--neon-rgb), 0.12) 30%, var(--neon));
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
           mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
   animation: spin 0.75s linear infinite;

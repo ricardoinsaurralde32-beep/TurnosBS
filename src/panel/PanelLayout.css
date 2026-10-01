@@ -1,6 +1,10 @@
 .pnl-shell {
   min-height: 100vh;
   background-color: var(--black);
+  /* Igual que en Landing.css: sin esto, cualquier texto que no declare su propio color
+     queda heredando el --white oscuro por defecto del <body>, y en modo claro se ve
+     invisible (blanco sobre fondo claro). */
+  color: var(--white);
   display: flex;
   flex-direction: column;
 }
@@ -65,15 +69,15 @@
   width: 54px; height: 54px;
   border-radius: 50%;
   background-color: var(--neon);
-  color: #0a0a0a;
+  color: var(--neon-ink, #0a0a0a);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 5px var(--black), 0 8px 20px rgba(184,241,76,0.4);
+  box-shadow: 0 0 0 5px var(--black), 0 8px 20px var(--neon-soft);
   transition: all 0.25s ease;
 }
 .pnl-mobilenav-home[aria-current="page"] {
-  box-shadow: 0 0 0 5px var(--black), 0 0 24px rgba(184,241,76,0.7);
+  box-shadow: 0 0 0 5px var(--black), 0 0 24px var(--neon-soft);
 }
 .pnl-mobilenav-home:active { transform: translateX(-50%) scale(0.94); }
 
@@ -103,7 +107,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 10px;
-  color: #fff;
+  color: var(--white);
   font-weight: 700;
   font-size: 0.9rem;
 }
@@ -115,7 +119,7 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 1rem;
 }
-.pnl-drawer-head button:hover { background-color: rgba(255,255,255,0.06); color: #fff; }
+.pnl-drawer-head button:hover { background-color: rgba(var(--overlay-rgb), 0.06); color: var(--white); }
 
 .pnl-drawer-list { display: flex; flex-direction: column; gap: 2px; }
 
@@ -133,8 +137,8 @@
   transition: background 0.2s ease;
 }
 .pnl-drawer-link svg { color: var(--neon); flex-shrink: 0; }
-.pnl-drawer-link:hover { background-color: rgba(255,255,255,0.05); }
-.pnl-drawer-link[aria-current="page"] { background-color: rgba(184,241,76,0.1); color: var(--neon); }
+.pnl-drawer-link:hover { background-color: rgba(var(--overlay-rgb), 0.05); }
+.pnl-drawer-link[aria-current="page"] { background-color: var(--neon-dim); color: var(--neon); }
 
 .pnl-drawer-logout { color: var(--danger); border-top: 1px solid var(--border); margin-top: 6px; padding-top: 14px; }
 .pnl-drawer-logout svg { color: var(--danger); }
@@ -178,8 +182,8 @@
     transition: all 0.2s ease;
   }
   .pnl-navlink svg { flex-shrink: 0; }
-  .pnl-navlink:hover { background-color: rgba(255,255,255,0.04); color: #fff; }
-  .pnl-navlink.active { background-color: rgba(184,241,76,0.12); color: var(--neon); }
+  .pnl-navlink:hover { background-color: rgba(var(--overlay-rgb), 0.04); color: var(--white); }
+  .pnl-navlink.active { background-color: var(--neon-dim); color: var(--neon); }
 
   .pnl-user {
     border-top: 1px solid var(--border);
@@ -190,7 +194,7 @@
     gap: 10px;
   }
   .pnl-user-info { display: flex; flex-direction: column; }
-  .pnl-user-name { color: #fff; font-size: 0.83rem; font-weight: 600; }
+  .pnl-user-name { color: var(--white); font-size: 0.83rem; font-weight: 600; }
   .pnl-user-role { color: var(--gray); font-size: 0.7rem; }
 
   .pnl-logout {

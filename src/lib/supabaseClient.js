@@ -9,4 +9,13 @@ if (!url || !anonKey) {
   );
 }
 
-export const supabase = createClient(url, anonKey);
+// La sesión se guarda en el navegador (localStorage) y el token se renueva solo, así no hay que
+// volver a iniciar sesión cada rato. Ojo: cada dirección (localhost:5173, localhost:3000,
+// turnosbs.com.ar...) guarda su propia sesión, por eso conviene usar siempre la misma.
+export const supabase = createClient(url, anonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});

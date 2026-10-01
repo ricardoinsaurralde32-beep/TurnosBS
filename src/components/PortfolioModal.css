@@ -10,8 +10,8 @@
 
 .pf-card {
   width: 100%; max-width: 460px;
-  background: linear-gradient(165deg, #141414 0%, #0b0b0b 100%);
-  border: 1px solid rgba(184,241,76,0.28);
+  background: linear-gradient(165deg, var(--panel) 0%, var(--black) 100%);
+  border: 1px solid rgba(var(--neon-rgb), 0.28);
   border-radius: 20px;
   overflow: hidden;
   max-height: 88vh;
@@ -55,7 +55,7 @@
   background: linear-gradient(transparent, rgba(0,0,0,0.85));
   color: #fff; font-size: 0.72rem; font-weight: 600; text-align: left;
 }
-.pf-thumb:hover { border-color: var(--neon); box-shadow: 0 0 18px rgba(184,241,76,0.22); }
+.pf-thumb:hover { border-color: var(--neon); box-shadow: 0 0 18px rgba(var(--neon-rgb), 0.22); }
 
 .pf-lightbox {
   position: fixed; inset: 0; background: rgba(0,0,0,0.96);
@@ -63,7 +63,10 @@
   gap: 14px; padding: 20px; z-index: 1100; animation: pmFade 0.2s ease-out;
 }
 .pf-lightbox img { max-width: 100%; max-height: 82vh; object-fit: contain; border-radius: 12px; }
-.pf-lightbox p { color: var(--gray); font-size: 0.85rem; }
+/* El lightbox es SIEMPRE oscuro (foto a pantalla completa) en cualquiera de los 2 modos,
+   por eso va fijo en claro en vez de var(--gray) — que en modo claro se pondría oscuro
+   y se volvería invisible sobre este fondo negro. */
+.pf-lightbox p { color: #b0b0b0; font-size: 0.85rem; }
 .pf-lightbox-close {
   position: absolute; top: 18px; right: 18px; width: 42px; height: 42px; border-radius: 50%;
   background: rgba(255,255,255,0.1); color: #fff;

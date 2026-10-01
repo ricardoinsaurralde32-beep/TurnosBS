@@ -1,0 +1,191 @@
+.sc-head { margin-bottom: 18px; }
+.sc-head h1 { color: var(--white); font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+.sc-sub { color: var(--gray); font-size: 0.83rem; }
+
+.sc-card {
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px;
+  max-width: 480px;
+}
+
+.sc-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.sc-plan-name { color: var(--white); font-size: 1.05rem; font-weight: 800; }
+.sc-plan-price { color: var(--gray); font-size: 0.82rem; margin-top: 2px; }
+
+.sc-badge {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.sc-badge-trial { background-color: rgba(var(--neon-rgb), 0.12); color: var(--neon); }
+.sc-badge-active { background-color: rgba(var(--neon-rgb), 0.18); color: var(--neon); }
+.sc-badge-warn { background-color: rgba(255,193,76,0.15); color: #f2c14c; }
+.sc-badge-bad { background-color: rgba(255,107,107,0.15); color: var(--danger); }
+
+.sc-trial-line { color: var(--gray); font-size: 0.82rem; line-height: 1.55; margin-bottom: 16px; }
+.sc-warn-line { color: var(--danger); }
+
+.sc-payment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  background-color: var(--black);
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.sc-payment-info { display: flex; flex-direction: column; min-width: 0; }
+.sc-payment-label { color: var(--gray); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.sc-payment-value { color: var(--white); font-size: 0.85rem; font-weight: 600; margin-top: 3px; }
+
+.sc-btn {
+  padding: 10px 20px;
+  background-color: var(--neon);
+  color: #0a0a0a;
+  font-weight: 800;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.sc-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 16px var(--neon-soft); }
+.sc-btn:disabled { opacity: 0.6; }
+
+.sc-error { color: var(--danger); font-size: 0.8rem; margin-top: 10px; }
+.sc-hint { color: #666; font-size: 0.74rem; margin-top: 16px; line-height: 1.5; }
+
+.sc-notice {
+  color: var(--neon);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: rgba(var(--neon-rgb), 0.08);
+}
+
+.sc-rows {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+  border-top: 1px solid var(--border);
+}
+.sc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.sc-row-label { color: var(--gray); font-size: 0.78rem; }
+.sc-row-value { color: var(--white); font-size: 0.82rem; font-weight: 600; text-align: right; word-break: break-word; }
+
+.sc-link-danger {
+  display: block;
+  margin-top: 14px;
+  padding: 0;
+  background: none;
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sc-confirm {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  background-color: rgba(255, 107, 107, 0.06);
+}
+.sc-confirm-title { color: var(--white); font-size: 0.88rem; font-weight: 800; margin-bottom: 6px; }
+.sc-confirm-text { color: var(--gray); font-size: 0.8rem; line-height: 1.5; margin-bottom: 14px; }
+.sc-confirm-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.sc-btn-danger { background-color: var(--danger); color: #fff; }
+.sc-btn-danger:hover:not(:disabled) { box-shadow: 0 0 16px rgba(255, 107, 107, 0.4); }
+.sc-btn-ghost {
+  background-color: transparent;
+  color: var(--white);
+  border: 1px solid var(--border);
+}
+.sc-btn-ghost:hover:not(:disabled) { box-shadow: none; border-color: var(--gray); }
+
+.sc-notice {
+  color: var(--neon);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: rgba(var(--neon-rgb), 0.08);
+}
+
+.sc-rows { display: flex; flex-direction: column; margin-bottom: 16px; border-top: 1px solid var(--border); }
+.sc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.sc-row-label { color: var(--gray); font-size: 0.78rem; }
+.sc-row-value { color: var(--white); font-size: 0.82rem; font-weight: 600; text-align: right; word-break: break-word; }
+
+.sc-link-danger {
+  display: block;
+  margin-top: 14px;
+  padding: 0;
+  background: none;
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sc-confirm {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  background-color: rgba(255, 107, 107, 0.06);
+}
+.sc-confirm-title { color: var(--white); font-size: 0.88rem; font-weight: 800; margin-bottom: 6px; }
+.sc-confirm-text { color: var(--gray); font-size: 0.8rem; line-height: 1.5; margin-bottom: 14px; }
+.sc-confirm-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.sc-btn-danger { background-color: var(--danger); color: #fff; }
+.sc-btn-danger:hover:not(:disabled) { box-shadow: 0 0 16px rgba(255, 107, 107, 0.4); }
+.sc-btn-ghost { background-color: transparent; color: var(--white); border: 1px solid var(--border); }
+.sc-btn-ghost:hover:not(:disabled) { box-shadow: none; border-color: var(--gray); }
+
+.sc-alert {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--gray);
+}
+.sc-alert p { margin: 0; }
+.sc-alert-title { color: var(--white); font-weight: 800; font-size: 0.9rem; margin-bottom: 6px !important; }
+.sc-alert-info { background-color: rgba(var(--neon-rgb), 0.07); border: 1px solid rgba(var(--neon-rgb), 0.3); }
+.sc-alert-bad { background-color: rgba(255, 107, 107, 0.07); border: 1px solid rgba(255, 107, 107, 0.35); }
+
+.sc-fineprint { color: #777; font-size: 0.74rem; line-height: 1.45; margin-top: 10px; }

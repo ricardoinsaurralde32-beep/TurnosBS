@@ -10,8 +10,8 @@
 
 .pm-card {
   width: 100%; max-width: 460px;
-  background: linear-gradient(165deg, #141414 0%, #0b0b0b 100%);
-  border: 1px solid rgba(184,241,76,0.28);
+  background: linear-gradient(165deg, var(--panel) 0%, var(--black) 100%);
+  border: 1px solid rgba(var(--neon-rgb), 0.28);
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 24px 70px rgba(0,0,0,0.7);
@@ -27,7 +27,7 @@
 .pm-head {
   display: flex; align-items: center; justify-content: space-between;
   gap: 10px; padding: 12px 12px 12px 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid rgba(var(--overlay-rgb), 0.07);
 }
 
 .pm-tabs { display: flex; gap: 6px; }
@@ -37,14 +37,14 @@
   padding: 7px 14px;
   border-radius: 999px;
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(var(--overlay-rgb), 0.1);
   color: var(--gray);
   font-size: 0.78rem; font-weight: 600;
   transition: all 0.25s ease;
 }
-.pm-tab:hover { color: #fff; border-color: rgba(184,241,76,0.4); }
+.pm-tab:hover { color: var(--white); border-color: rgba(var(--neon-rgb), 0.4); }
 .pm-tab.on {
-  background-color: rgba(184,241,76,0.14);
+  background-color: rgba(var(--neon-rgb), 0.14);
   border-color: var(--neon);
   color: var(--neon);
 }
@@ -53,12 +53,12 @@
   width: 32px; height: 32px;
   display: flex; align-items: center; justify-content: center;
   border-radius: 50%;
-  background: rgba(255,255,255,0.05);
+  background: rgba(var(--overlay-rgb), 0.05);
   color: var(--gray);
   flex-shrink: 0;
   transition: all 0.25s ease;
 }
-.pm-close:hover { background: rgba(255,107,107,0.18); color: #fff; transform: rotate(90deg); }
+.pm-close:hover { background: rgba(255,107,107,0.18); color: var(--white); transform: rotate(90deg); }
 
 /* ===== Cuerpo ===== */
 .pm-body { padding: 16px; overflow-y: auto; }
@@ -66,8 +66,8 @@
 .pm-map {
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(184,241,76,0.22);
-  box-shadow: 0 0 24px rgba(184,241,76,0.1);
+  border: 1px solid rgba(var(--neon-rgb), 0.22);
+  box-shadow: 0 0 24px rgba(var(--neon-rgb), 0.1);
   margin-bottom: 16px;
 }
 .pm-map iframe {
@@ -82,7 +82,7 @@
   margin-bottom: 16px;
 }
 .pm-addr svg { color: var(--neon); flex-shrink: 0; margin-top: 2px; }
-.pm-addr-main { color: #fff; font-size: 0.9rem; font-weight: 600; }
+.pm-addr-main { color: var(--white); font-size: 0.9rem; font-weight: 600; }
 .pm-addr-sub  { color: var(--gray); font-size: 0.78rem; margin-top: 2px; }
 
 .pm-actions { display: flex; gap: 10px; }
@@ -99,17 +99,17 @@
   transition: all 0.28s ease;
 }
 .pm-action:hover {
-  background-color: var(--neon); color: #0a0a0a;
-  box-shadow: 0 0 22px rgba(184,241,76,0.4);
+  background-color: var(--neon); color: var(--neon-ink, #0a0a0a);
+  box-shadow: 0 0 22px rgba(var(--neon-rgb), 0.4);
 }
 
 .pm-action-ghost {
-  border-color: rgba(255,255,255,0.18);
+  border-color: rgba(var(--overlay-rgb), 0.18);
   color: var(--gray);
 }
 .pm-action-ghost:hover {
-  background-color: rgba(255,255,255,0.1);
-  color: #fff;
+  background-color: rgba(var(--overlay-rgb), 0.1);
+  color: var(--white);
   box-shadow: none;
 }
 
@@ -125,7 +125,7 @@
   padding: 0;
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(var(--overlay-rgb), 0.08);
   background: none;
   transition: all 0.28s ease;
 }
@@ -136,8 +136,8 @@
   position: absolute; top: 10px; left: 10px;
   padding: 4px 12px;
   border-radius: 999px;
-  background-color: rgba(184,241,76,0.9);
-  color: #0a0a0a;
+  background-color: rgba(var(--neon-rgb), 0.9);
+  color: var(--neon-ink, #0a0a0a);
   font-size: 0.68rem; font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.4px;
 }
@@ -151,7 +151,7 @@
 }
 .pm-thumb:hover {
   border-color: var(--neon);
-  box-shadow: 0 0 22px rgba(184,241,76,0.28);
+  box-shadow: 0 0 22px rgba(var(--neon-rgb), 0.28);
   transform: translateY(-3px);
 }
 
@@ -170,7 +170,8 @@
   border-radius: 12px;
   animation: pmPop 0.35s ease-out both;
 }
-.pm-lightbox p { color: var(--gray); font-size: 0.85rem; }
+/* El lightbox es siempre oscuro (foto a pantalla completa): color fijo, no var(--gray) */
+.pm-lightbox p { color: #b0b0b0; font-size: 0.85rem; }
 
 .pm-lightbox-close {
   position: absolute; top: 18px; right: 18px;

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import Calendar from './Calendar';
 import ThankYouModal from './ThankYouModal';
 import PlaceModal from './PlaceModal';
@@ -17,6 +18,7 @@ import {
   fileExt
 } from '../lib/api';
 import { buildReminderHint } from '../utils/reminders';
+import { getThemeVars } from '../config/colorSchemes';
 import './Landing.css';
 
 /* ================= HELPERS PUROS ================= */
@@ -169,10 +171,13 @@ export default function Landing() {
     setTimeout(() => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
   };
 
+  const { slug: routeSlug } = useParams();
+  const businessSlug = routeSlug || 'barber-studio';
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data, error } = await fetchBusinessData('barber-studio');
+      const { data, error } = await fetchBusinessData(businessSlug);
       if (cancelled) return;
       if (error || !data) {
         setLoadError('No pudimos cargar la información. Recargá la página o intentá más tarde.');
@@ -181,7 +186,7 @@ export default function Landing() {
       setBusinessData(data);
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [businessSlug]);
 
   useEffect(() => {
     (async () => {
@@ -190,18 +195,28 @@ export default function Landing() {
     })();
   }, []);
 
+  /* La barra de scroll del navegador es nativa (no vive dentro de ".page"), así
+     que el color de acento que se aplica inline en ".page" no le llega — por eso
+     se quedaba siempre en el verde lima de :root sin importar el tema elegido.
+     Se sincronizan las mismas variables también en <html>, que es de donde el
+     navegador lee el color real del thumb del scroll. */
+  useEffect(() => {
+    if (!businessData) return;
+    const vars = getThemeVars(businessData.colorScheme, businessData.customColors, businessData.themeMode);
+    const root = document.documentElement.style;
+    Object.entries(vars).forEach(([k, v]) => root.setProperty(k, v));
+    return () => Object.keys(vars).forEach((k) => root.removeProperty(k));
+  }, [businessData?.colorScheme, businessData?.customColors, businessData?.themeMode]);
+
   /* ---------- Funciones que dependen del negocio/profesional elegido ---------- */
 
   const slotsForDay = (pro, date, blockedOverride = blockedSlotsMap) => {
     const schedule = pro?.schedule || businessData.schedule;
     const ranges = schedule?.[date.getDay()] || [];
-    const step = businessData.slotMinutes;
 
-    const out = [];
-    for (const [from, to] of ranges) {
-      const end = toMin(to);
-      for (let t = toMin(from); t < end; t += step) out.push(toHHMM(t));
-    }
+    // Cada rango "desde-hasta" es UN turno (no se subdivide en partes de slotMinutes).
+    // Si querés varios turnos en la franja, cargá varios rangos: 09:00 a 09:40, 09:50 a 10:30, etc.
+    const out = ranges.map(([from]) => from).sort();
 
     const blocked = blockedOverride[dateKey(date)] || [];
     return blocked.length === 0 ? out : out.filter((t) => !blocked.includes(t));
@@ -618,23 +633,45 @@ export default function Landing() {
     );
   }
 
+  // Negocio suspendido por falta de pago (o que todavía no terminó de activar su cuenta):
+  // no se toman turnos. Los datos no se tocan, vuelve a funcionar apenas regulariza.
+  if (businessData.bookingsPaused) {
+    return (
+      <div className="page-loading">
+        <p>{businessData.name} no está recibiendo turnos por el momento. Volvé a intentar más tarde.</p>
+      </div>
+    );
+  }
+
+  // Cada profesional puede tener su propio precio para un servicio del catálogo
+  // (ej: Richard y Omar cobran distinto por el mismo corte) — si no cargó uno propio,
+  // se usa el precio base del catálogo (professional.servicePrices solo trae overrides).
   const proServices = professional
-    ? businessData.services.filter((s) => professional.services.includes(s.id))
+    ? businessData.services
+        .filter((s) => professional.services.includes(s.id))
+        .map((s) => ({ ...s, price: professional.servicePrices?.[s.id] ?? s.price }))
     : [];
 
-  const totalPrice = proServices
-    .filter((s) => selectedServices.includes(s.id))
-    .reduce((sum, s) => sum + (s.price || 0), 0);
+  const selectedProServices = proServices.filter((s) => selectedServices.includes(s.id));
+  // El precio ya no es un interruptor único para todo el negocio: se muestra el total
+  // solo cuando TODOS los servicios elegidos tienen "Mostrar en la web" activado en
+  // Mis servicios — así nunca se ve un total parcial/engañoso.
+  const showTotal = selectedProServices.length > 0 && selectedProServices.every((s) => s.showPrice);
+  const totalPrice = selectedProServices.reduce((sum, s) => sum + (s.price || 0), 0);
 
   const rawDateLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
   const todayLabel = rawDateLabel.charAt(0).toUpperCase() + rawDateLabel.slice(1);
   const hasPlacePhotos = (businessData.placePhotos || []).length > 0;
   const reminderHint = buildReminderHint(businessData.reminders);
+  // El acento de la página (botones, links, resaltados) depende del esquema de color
+  // que el negocio eligió al darse de alta o en "Datos del negocio". Además, cada
+  // negocio puede elegir fondo oscuro o claro (independiente del acento).
+  const themeVars = getThemeVars(businessData.colorScheme, businessData.customColors, businessData.themeMode);
 
   /* ================= RENDER ================= */
 
   return (
-    <div className="page">
+    <div className={`page ${businessData.themeMode === 'light' ? 'theme-light' : 'theme-dark'}`} style={themeVars}>
 
       <div className="ambient" aria-hidden="true">
         <span className="amb amb-1" />
@@ -885,7 +922,7 @@ export default function Landing() {
               </div>
               {errors.services && <span className="err">{errors.services}</span>}
 
-              {businessData.pricesEnabled && selectedServices.length > 0 && (
+              {showTotal && (
                 <div className="total-box">
                   <span>Total</span>
                   <strong>${totalPrice.toLocaleString('es-AR')}</strong>

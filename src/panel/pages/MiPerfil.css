@@ -1,5 +1,5 @@
 .mp-head { margin-bottom: 24px; }
-.mp-head h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+.mp-head h1 { color: var(--white); font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
 .mp-sub { color: var(--gray); font-size: 0.83rem; }
 
 /* ===== Bloque superior: avatar + nombre + descripción ===== */
@@ -30,7 +30,7 @@
 .mp-avatar-edit {
   position: absolute; bottom: -2px; right: -2px;
   width: 30px; height: 30px; border-radius: 50%;
-  background-color: var(--neon); color: #0a0a0a;
+  background-color: var(--neon); color: var(--neon-ink, #0a0a0a);
   display: flex; align-items: center; justify-content: center;
   border: 3px solid var(--black);
   transition: transform 0.2s ease;
@@ -39,7 +39,7 @@
 
 .mp-top-fields { width: 100%; max-width: 420px; text-align: left; display: flex; flex-direction: column; gap: 16px; }
 
-.mp-field label { display: block; color: #fff; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+.mp-field label { display: block; color: var(--white); font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
 .mp-field input, .mp-field textarea {
   width: 100%;
   background-color: var(--black);
@@ -66,7 +66,7 @@
 }
 
 .mp-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
-.mp-section-head h2 { color: #fff; font-size: 0.96rem; font-weight: 700; }
+.mp-section-head h2 { color: var(--white); font-size: 0.96rem; font-weight: 700; }
 
 .mp-optional { color: var(--gray); font-size: 0.72rem; font-weight: 500; text-transform: none; }
 
@@ -90,7 +90,7 @@
 .mp-social-row input { flex: 1 1 120px; min-width: 0; }
 .mp-social-row select, .mp-social-row input {
   background-color: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-  padding: 7px 10px; color: #fff; font-size: 0.82rem; outline: none;
+  padding: 7px 10px; color: var(--white); font-size: 0.82rem; outline: none;
 }
 .mp-social-row select:focus, .mp-social-row input:focus { border-color: var(--neon); }
 
@@ -131,7 +131,7 @@
 
 .mp-photo-card input {
   background-color: var(--black); border: 1px solid var(--border); border-radius: 8px;
-  padding: 6px 10px; color: #fff; font-size: 0.76rem; outline: none;
+  padding: 6px 10px; color: var(--white); font-size: 0.76rem; outline: none;
 }
 .mp-photo-card input:focus { border-color: var(--neon); }
 
@@ -140,16 +140,16 @@
   width: 100%;
   min-width: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
-  border: 2px dashed rgba(184,241,76,0.32);
+  border: 2px dashed rgba(var(--neon-rgb), 0.32);
   border-radius: 12px;
-  background-color: rgba(184,241,76,0.04);
+  background-color: rgba(var(--neon-rgb), 0.04);
   color: var(--gray);
   cursor: pointer;
   transition: all 0.25s ease;
 }
 .mp-photo-add svg { color: var(--neon); }
 .mp-photo-add span { font-size: 0.72rem; font-weight: 600; color: var(--white); }
-.mp-photo-add:hover { border-color: var(--neon); background-color: rgba(184,241,76,0.09); }
+.mp-photo-add:hover { border-color: var(--neon); background-color: rgba(var(--neon-rgb), 0.09); }
 
 .mp-notify { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
 
@@ -166,7 +166,7 @@
 .mp-footer { position: sticky; bottom: 90px; margin-top: 26px; display: flex; justify-content: center; }
 
 .mp-save {
-  padding: 13px 40px; background-color: var(--neon); color: #0a0a0a; font-weight: 800;
+  padding: 13px 40px; background-color: var(--neon); color: var(--neon-ink, #0a0a0a); font-weight: 800;
   border-radius: 999px; font-size: 0.95rem; transition: all 0.25s ease; box-shadow: 0 0 20px var(--neon-soft);
 }
 .mp-save:hover { transform: translateY(-2px); box-shadow: 0 0 28px var(--neon-soft); }

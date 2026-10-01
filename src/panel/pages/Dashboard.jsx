@@ -52,6 +52,7 @@ export default function Dashboard() {
   const [priceMap, setPriceMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [showNextDetails, setShowNextDetails] = useState(false);
+  const [proFilter, setProFilter] = useState('all');
 
   useEffect(() => {
     (async () => {
@@ -70,17 +71,32 @@ export default function Dashboard() {
 
   const hasPrices = Object.keys(priceMap).length > 0;
 
+  // Profesionales que aparecen en los turnos. Si el negocio tiene más de uno (y quien mira es
+  // el dueño), se muestra un selector para ver las tarjetas de un profesional o de todos.
+  const proNames = useMemo(() => {
+    const names = new Set();
+    bookings.forEach((b) => { if (b.professionals?.name) names.add(b.professionals.name); });
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, [bookings]);
+  const showProFilter = isOwner && proNames.length > 1;
+  const activePro = showProFilter && proNames.includes(proFilter) ? proFilter : 'all';
+
+  const scopedBookings = useMemo(
+    () => (activePro === 'all' ? bookings : bookings.filter((b) => b.professionals?.name === activePro)),
+    [bookings, activePro]
+  );
+
   const [rangeFrom, rangeTo] = rangeBounds(range);
 
   const inRange = useMemo(
-    () => bookings.filter((b) => b.date >= rangeFrom && b.date <= rangeTo && b.status !== 'cancelled'),
-    [bookings, rangeFrom, rangeTo]
+    () => scopedBookings.filter((b) => b.date >= rangeFrom && b.date <= rangeTo && b.status !== 'cancelled'),
+    [scopedBookings, rangeFrom, rangeTo]
   );
 
-  const todayBookings = bookings.filter((b) => b.date === todayISO && b.status !== 'cancelled');
+  const todayBookings = scopedBookings.filter((b) => b.date === todayISO && b.status !== 'cancelled');
 
   // "pending" ya casi no se usa (los turnos arrancan "done" solos), lo dejamos por compatibilidad
-  const nextBooking = bookings
+  const nextBooking = scopedBookings
     .filter((b) => (b.date > todayISO || (b.date === todayISO)) && (b.status === 'pending' || b.status === 'done'))
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
 
@@ -158,6 +174,16 @@ export default function Dashboard() {
           </button>
         ))}
       </div>
+
+      {showProFilter && (
+        <div className="db-range">
+          {['all', ...proNames].map((name) => (
+            <button key={name} type="button" className={`db-range-btn ${activePro === name ? 'active' : ''}`} onClick={() => setProFilter(name)}>
+              {name === 'all' ? 'Todos' : name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {loading ? (
         <p className="ah-loading">Cargando...</p>

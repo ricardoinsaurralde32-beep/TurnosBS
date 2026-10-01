@@ -1,12 +1,12 @@
 .ms-head { margin-bottom: 22px; }
-.ms-head h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+.ms-head h1 { color: var(--white); font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
 .ms-sub { color: var(--gray); font-size: 0.83rem; line-height: 1.5; max-width: 460px; }
 
 .ms-section { border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px; }
 .ms-section:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
 
 .ms-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.ms-section h2 { color: #fff; font-size: 0.98rem; font-weight: 700; margin-bottom: 6px; }
+.ms-section h2 { color: var(--white); font-size: 0.98rem; font-weight: 700; margin-bottom: 6px; }
 
 .ms-hint { color: #666; font-size: 0.76rem; margin-bottom: 14px; }
 
@@ -29,7 +29,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 12px;
-  color: #fff;
+  color: var(--white);
   font-size: 0.85rem;
   outline: none;
 }
@@ -37,7 +37,7 @@
 .ms-add-submit {
   padding: 8px 18px;
   background-color: var(--neon);
-  color: #0a0a0a;
+  color: var(--neon-ink, #0a0a0a);
   font-weight: 800;
   border-radius: 8px;
   font-size: 0.8rem;
@@ -56,8 +56,8 @@
   flex-wrap: wrap;
 }
 
-.ms-catalog-label { color: #fff; font-size: 0.85rem; font-weight: 600; flex: 1; }
-.ms-confirm-text { color: #fff; font-size: 0.8rem; flex: 1; }
+.ms-catalog-label { color: var(--white); font-size: 0.85rem; font-weight: 600; flex: 1; }
+.ms-confirm-text { color: var(--white); font-size: 0.8rem; flex: 1; }
 
 .ms-edit-input {
   flex: 1;
@@ -65,7 +65,7 @@
   border: 1px solid var(--neon);
   border-radius: 8px;
   padding: 6px 10px;
-  color: #fff;
+  color: var(--white);
   font-size: 0.83rem;
   outline: none;
 }
@@ -82,43 +82,66 @@
   white-space: nowrap;
 }
 .ms-mini-btn:hover { border-color: var(--neon); color: var(--neon); }
-.ms-mini-ok { background-color: var(--neon); border-color: var(--neon); color: #0a0a0a; }
+.ms-mini-ok { background-color: var(--neon); border-color: var(--neon); color: var(--neon-ink, #0a0a0a); }
 .ms-mini-danger { color: var(--danger); border-color: rgba(255,107,107,0.3); }
 .ms-mini-danger:hover { background-color: var(--danger); border-color: var(--danger); color: #fff; }
 
 .ms-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
 
 .ms-card {
-  display: flex; align-items: center; gap: 12px;
-  width: 100%; text-align: left;
+  display: flex; flex-direction: column; gap: 10px;
+  width: 100%;
   background-color: var(--panel);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 14px 16px;
   transition: all 0.2s ease;
 }
-.ms-card:hover { border-color: rgba(184,241,76,0.35); }
+.ms-card:hover { border-color: rgba(var(--neon-rgb), 0.35); }
 .ms-card.active {
-  background-color: rgba(184,241,76,0.07);
+  background-color: rgba(var(--neon-rgb), 0.07);
   border-color: var(--neon);
-  box-shadow: 0 0 16px rgba(184,241,76,0.12);
+  box-shadow: 0 0 16px rgba(var(--neon-rgb), 0.12);
 }
+
+/* El botón que prende/apaga el servicio: ocupa el mismo lugar que antes tenía
+   toda la tarjeta, pero ahora es solo la fila de arriba — así el input de
+   precio propio (abajo) no queda anidado dentro de un <button>. */
+.ms-card-toggle {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; text-align: left;
+  background: none; border: none; padding: 0;
+  color: inherit; font: inherit;
+}
+
+.ms-my-price {
+  width: 100%;
+  background-color: var(--black);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--white);
+  font-size: 0.82rem;
+  outline: none;
+}
+.ms-my-price:focus { border-color: var(--neon); }
+.ms-my-price::placeholder { color: var(--gray); }
 
 .ms-check {
   width: 22px; height: 22px; flex-shrink: 0;
   border-radius: 6px; border: 2px solid var(--border);
   display: flex; align-items: center; justify-content: center;
-  color: #0a0a0a; font-size: 0.78rem; font-weight: 800;
+  color: var(--neon-ink, #0a0a0a); font-size: 0.78rem; font-weight: 800;
   transition: all 0.2s ease;
 }
 .ms-card.active .ms-check { background-color: var(--neon); border-color: var(--neon); }
 
-.ms-label { color: #fff; font-weight: 600; font-size: 0.92rem; flex: 1; }
+.ms-label { color: var(--white); font-weight: 600; font-size: 0.92rem; flex: 1; }
 
 .ms-count {
   color: var(--neon); font-size: 0.7rem; font-weight: 700;
-  background-color: rgba(184,241,76,0.1);
-  border: 1px solid rgba(184,241,76,0.25);
+  background-color: rgba(var(--neon-rgb), 0.1);
+  border: 1px solid rgba(var(--neon-rgb), 0.25);
   padding: 3px 10px; border-radius: 999px; white-space: nowrap;
 }
 
@@ -129,7 +152,7 @@
 .ms-save {
   padding: 13px 40px;
   background-color: var(--neon);
-  color: #0a0a0a;
+  color: var(--neon-ink, #0a0a0a);
   font-weight: 800;
   border-radius: 999px;
   font-size: 0.95rem;
@@ -150,8 +173,8 @@
   color: var(--neon);
   font-size: 0.74rem;
   font-weight: 700;
-  background-color: rgba(184,241,76,0.08);
-  border: 1px solid rgba(184,241,76,0.22);
+  background-color: rgba(var(--neon-rgb), 0.08);
+  border: 1px solid rgba(var(--neon-rgb), 0.22);
   padding: 2px 9px;
   border-radius: 999px;
   white-space: nowrap;
@@ -160,6 +183,26 @@
 .ms-edit-price {
   width: 90px; flex: 0 0 auto;
   background-color: var(--black); border: 1px solid var(--border); border-radius: 8px;
-  padding: 6px 10px; color: #fff; font-size: 0.83rem; outline: none;
+  padding: 6px 10px; color: var(--white); font-size: 0.83rem; outline: none;
 }
 .ms-edit-price:focus { border-color: var(--neon); }
+
+.ms-show-price {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--gray); font-size: 0.76rem; font-weight: 600;
+  white-space: nowrap; cursor: pointer;
+}
+.ms-show-price input { accent-color: var(--neon); width: 15px; height: 15px; }
+
+.ms-visibility-tag {
+  font-size: 0.7rem; font-weight: 700;
+  color: var(--gray);
+  background-color: rgba(var(--overlay-rgb), 0.06);
+  border: 1px solid var(--border);
+  padding: 2px 9px; border-radius: 999px; white-space: nowrap;
+}
+.ms-visibility-tag.on {
+  color: var(--neon);
+  background-color: rgba(var(--neon-rgb), 0.1);
+  border-color: rgba(var(--neon-rgb), 0.3);
+}

@@ -1,3 +1,11 @@
+export const IconPin = ({ size = 32 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z" />
+    <circle cx="12" cy="9.5" r="2.5" />
+  </svg>
+);
+
 export const IconCheck = ({ size = 34 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
        stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -102,6 +110,23 @@ export const IconX = ({ size = 18 }) => (
        stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
     <line x1="18" y1="6" x2="6" y2="18" />
     <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+export const IconEye = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+export const IconEyeOff = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 3l18 18" />
+    <path d="M10.58 5.11A10.6 10.6 0 0 1 12 5c7 0 10.5 7 10.5 7a13.5 13.5 0 0 1-3.15 4.14M6.6 6.6C3.87 8.36 1.5 12 1.5 12s3.5 7 10.5 7a10.4 10.4 0 0 0 4.14-.84" />
+    <path d="M9.88 9.88a3 3 0 0 0 4.24 4.24" />
   </svg>
 );
 
@@ -237,5 +262,24 @@ export const IconHourglass = ({ size = 20 }) => (
     <path d="M6 21h12" />
     <path d="M7 3c0 5 5 6 5 9s-5 4-5 9" />
     <path d="M17 3c0 5-5 6-5 9s5 4 5 9" />
+  </svg>
+);
+
+export const IconChart = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 3v18h18" />
+    <rect x="7" y="12" width="3" height="6" />
+    <rect x="12.5" y="8" width="3" height="10" />
+    <rect x="18" y="5" width="3" height="13" />
+  </svg>
+);
+
+export const IconCard = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <path d="M2 10h20" />
+    <path d="M6 15h4" />
   </svg>
 );

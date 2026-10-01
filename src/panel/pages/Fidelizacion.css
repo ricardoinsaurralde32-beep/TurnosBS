@@ -1,11 +1,11 @@
 .fd-head { margin-bottom: 20px; }
-.fd-head h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+.fd-head h1 { color: var(--white); font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
 .fd-sub { color: var(--gray); font-size: 0.83rem; max-width: 480px; }
 
 .fd-settings { background-color: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 24px; }
 
 .fd-toggle-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
-.fd-toggle-title { color: #fff; font-size: 0.9rem; font-weight: 700; }
+.fd-toggle-title { color: var(--white); font-size: 0.9rem; font-weight: 700; }
 .fd-toggle-hint { color: var(--gray); font-size: 0.76rem; margin-top: 4px; max-width: 380px; }
 
 .fd-switch { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; }
@@ -16,29 +16,29 @@
 .fd-switch input:checked + .fd-switch-track .fd-switch-thumb { transform: translateX(18px); }
 
 .fd-fields { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
-.fd-field label { display: block; color: #fff; font-size: 0.84rem; font-weight: 600; margin-bottom: 6px; }
+.fd-field label { display: block; color: var(--white); font-size: 0.84rem; font-weight: 600; margin-bottom: 6px; }
 .fd-field input {
   width: 100%; background-color: var(--black); border: 1px solid var(--border); border-radius: 10px;
-  padding: 9px 13px; color: #fff; font-size: 0.86rem; outline: none;
+  padding: 9px 13px; color: var(--white); font-size: 0.86rem; outline: none;
 }
 .fd-field input:focus { border-color: var(--neon); }
 
-.fd-save { margin-top: 16px; padding: 10px 26px; background-color: var(--neon); color: #0a0a0a; font-weight: 800; border-radius: 999px; font-size: 0.84rem; transition: all 0.2s ease; }
+.fd-save { margin-top: 16px; padding: 10px 26px; background-color: var(--neon); color: var(--neon-ink, #0a0a0a); font-weight: 800; border-radius: 999px; font-size: 0.84rem; transition: all 0.2s ease; }
 .fd-save:hover { transform: translateY(-2px); box-shadow: 0 0 18px var(--neon-soft); }
 
-.fd-clients h2 { color: #fff; font-size: 0.98rem; font-weight: 700; margin-bottom: 12px; }
+.fd-clients h2 { color: var(--white); font-size: 0.98rem; font-weight: 700; margin-bottom: 12px; }
 .fd-empty { color: var(--gray); font-size: 0.84rem; }
 
 .fd-list { display: flex; flex-direction: column; gap: 10px; }
 
 .fd-card { background-color: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
-.fd-card.reached { border-color: rgba(184,241,76,0.4); background-color: rgba(184,241,76,0.05); }
+.fd-card.reached { border-color: rgba(var(--neon-rgb), 0.4); background-color: rgba(var(--neon-rgb), 0.05); }
 
 .fd-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.fd-card-name { color: #fff; font-weight: 700; font-size: 0.86rem; }
+.fd-card-name { color: var(--white); font-weight: 700; font-size: 0.86rem; }
 .fd-card-badge {
   font-size: 0.68rem; font-weight: 800; color: var(--neon);
-  background-color: rgba(184,241,76,0.12); border: 1px solid rgba(184,241,76,0.3);
+  background-color: rgba(var(--neon-rgb), 0.12); border: 1px solid rgba(var(--neon-rgb), 0.3);
   padding: 2px 10px; border-radius: 999px;
 }
 

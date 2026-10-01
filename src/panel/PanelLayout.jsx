@@ -1,12 +1,18 @@
-import { useState } from 'react';
-import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { NavLink, Outlet, useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { usePanelAuth } from './PanelAuthContext';
 import {
   IconHome, IconCalendar, IconList, IconClock, IconScissors,
   IconUser, IconQr, IconUsers, IconBuilding, IconMore, IconLogout, IconX,
-  IconStar, IconGift, IconHourglass
+  IconStar, IconGift, IconHourglass, IconChart, IconCard
 } from '../components/Icons';
+import { getThemeVars } from '../config/colorSchemes';
 import './PanelLayout.css';
+import './Billing.css';
+
+// Único negocio que ve el ítem "Suscriptores" (Richard, dueño de Barber Studio). El chequeo que
+// realmente importa está del lado del servidor; esto es solo para no mostrar el link a nadie más.
+const PLATFORM_ADMIN_BUSINESS_ID = '24b520a2-ce47-4ac9-a00e-99e49eafc0fe';
 
 const HOME_ITEM = { to: '/panel/dashboard', label: 'Dashboard', icon: IconHome };
 
@@ -23,7 +29,9 @@ const NAV_ITEMS = [
   { to: '/panel/profesionales', label: 'Profesionales', icon: IconUsers, ownerOnly: true },
   { to: '/panel/fidelizacion', label: 'Fidelización', icon: IconGift, ownerOnly: true },
   { to: '/panel/bloqueados', label: 'Bloqueados', icon: IconX, ownerOnly: true },
-  { to: '/panel/negocio', label: 'Negocio', icon: IconBuilding, ownerOnly: true }
+  { to: '/panel/negocio', label: 'Negocio', icon: IconBuilding, ownerOnly: true },
+  { to: '/panel/suscripcion', label: 'Suscripción', icon: IconCard, ownerOnly: true },
+  { to: '/panel/suscriptores', label: 'Suscriptores', icon: IconChart, ownerOnly: true, platformAdminOnly: true }
 ];
 
 const MAX_DIRECT_MOBILE = 4; // 3 iconos + botón "Más"; el 4to slot siempre es overflow
@@ -33,7 +41,17 @@ export default function PanelLayout() {
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const items = NAV_ITEMS.filter((item) => !item.ownerOnly || session.role === 'owner');
+  const location = useLocation();
+  const billing = session.billing;
+  const locked = !!billing?.locked;
+
+  // Con la cuenta bloqueada (sin tarjeta confirmada, o suspendida por falta de pago) el dueño
+  // solo puede ver "Suscripción". El resto del panel queda cerrado hasta que pague.
+  const items = NAV_ITEMS.filter((item) =>
+    (!locked || item.to === '/panel/suscripcion') &&
+    (!item.ownerOnly || session.role === 'owner') &&
+    (!item.platformAdminOnly || session.businessId === PLATFORM_ADMIN_BUSINESS_ID)
+  );
 
   const directCount = Math.min(items.length, MAX_DIRECT_MOBILE - 1);
   const directItems = items.slice(0, directCount);
@@ -72,8 +90,52 @@ export default function PanelLayout() {
     );
   };
 
+  // El panel usa la paleta y el modo (oscuro/claro) que el propio negocio eligió — como los
+  // temas de chat de Telegram: el acento cambia y ahora también puede cambiar el fondo entero.
+  // A Barber Studio se le ve igual que siempre porque justo eligió esa combinación, no porque
+  // el panel esté fijo en verde y negro.
+  const themeVars = getThemeVars(session.colorScheme, session.customColors, session.themeMode);
+
+  /* Mismo motivo que en la página pública: la barra de scroll del navegador no
+     vive dentro de ".pnl-shell", así que sin esto se quedaba siempre en el verde
+     lima de :root sin importar la paleta del negocio logueado. */
+  useEffect(() => {
+    const root = document.documentElement.style;
+    Object.entries(themeVars).forEach(([k, v]) => root.setProperty(k, v));
+    return () => Object.keys(themeVars).forEach((k) => root.removeProperty(k));
+  }, [session.colorScheme, session.customColors, session.themeMode]);
+
+  // Un barbero (no dueño) no puede pagar: si el negocio está bloqueado, solo le avisamos.
+  if (locked && session.role !== 'owner') {
+    return (
+      <div className={`pnl-shell ${session.themeMode === 'light' ? 'theme-light' : 'theme-dark'}`} style={themeVars}>
+        <main className="pnl-main">
+          <div className="bl-blocked">
+            <h1>El panel está en pausa</h1>
+            <p>La cuenta de este negocio está suspendida. Avisale al dueño para que la reactive desde Suscripción.</p>
+            <button type="button" className="bl-btn" onClick={handleLogout}>Salir</button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+  if (locked && location.pathname !== '/panel/suscripcion') {
+    return <Navigate to="/panel/suscripcion" replace />;
+  }
+
+  // Avisos arriba del panel (la cuenta sigue funcionando, pero hay algo que atender)
+  let banner = null;
+  if (!locked && billing && !billing.exempt && session.role === 'owner' && location.pathname !== '/panel/suscripcion') {
+    if (billing.failures >= 1) {
+      banner = { tone: 'bad', text: 'No pudimos cobrar tu suscripción. Si falla otra vez, se suspende tu cuenta.', cta: 'Actualizar tarjeta' };
+    } else if (billing.status === 'canceled' && billing.accessUntil) {
+      const d = new Date(billing.accessUntil).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
+      banner = { tone: 'warn', text: `Cancelaste tu suscripción. Tenés acceso hasta el ${d}.`, cta: 'Reactivar' };
+    }
+  }
+
   return (
-    <div className="pnl-shell">
+    <div className={`pnl-shell ${session.themeMode === 'light' ? 'theme-light' : 'theme-dark'}`} style={themeVars}>
 
       <aside className="pnl-sidebar">
         <div className="pnl-brand">TurnosBS</div>
@@ -109,6 +171,12 @@ export default function PanelLayout() {
       </aside>
 
       <main className="pnl-main">
+        {banner && (
+          <div className={`bl-banner bl-banner-${banner.tone}`}>
+            <span>{banner.text}</span>
+            <Link to="/panel/suscripcion" className="bl-banner-cta">{banner.cta}</Link>
+          </div>
+        )}
         <Outlet />
       </main>
 

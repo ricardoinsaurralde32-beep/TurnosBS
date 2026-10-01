@@ -1,5 +1,5 @@
 .bl-head { margin-bottom: 20px; }
-.bl-head h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+.bl-head h1 { color: var(--white); font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
 .bl-sub { color: var(--gray); font-size: 0.83rem; }
 
 .bl-form {
@@ -17,7 +17,7 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 13px;
-  color: #fff;
+  color: var(--white);
   font-size: 0.86rem;
   outline: none;
 }
@@ -28,7 +28,7 @@
 .bl-add-btn {
   padding: 10px 22px;
   background-color: var(--danger);
-  color: #fff;
+  color: var(--white);
   font-weight: 800;
   border-radius: 999px;
   font-size: 0.84rem;
@@ -60,7 +60,7 @@
 }
 
 .bl-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.bl-name { color: #fff; font-weight: 700; font-size: 0.88rem; }
+.bl-name { color: var(--white); font-weight: 700; font-size: 0.88rem; }
 .bl-phone { color: var(--gray); font-size: 0.78rem; }
 .bl-reason { color: #666; font-size: 0.74rem; font-style: italic; }
 

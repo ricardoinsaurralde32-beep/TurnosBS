@@ -2,8 +2,22 @@ import { useState, useEffect } from 'react';
 import { usePanelAuth } from '../PanelAuthContext';
 import { fetchBusinessById, updateBusinessReal, uploadImage, deleteImage, fileExt } from '../../lib/api';
 import { formatLead } from '../../utils/reminders';
-import { IconX, IconCamera } from '../../components/Icons';
+import { IconX, IconCamera, IconPin } from '../../components/Icons';
+import LocationMapModal from '../LocationMapModal';
+import ColorSchemePicker from '../../components/ColorSchemePicker';
+import { CUSTOM_SCHEME_ID, DEFAULT_CUSTOM_COLORS } from '../../config/colorSchemes';
 import './DatosNegocio.css';
+
+// A partir de lat/lng arma los tres links que ya usa el resto del sistema
+// (botón "Ver en el mapa" del footer, mapa embebido de la web, y vista de calle),
+// sin depender de que el negocio los haya pegado a mano.
+function buildMapLinks(lat, lng) {
+  return {
+    maps_url: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+    map_embed_url: `https://maps.google.com/maps?q=${lat},${lng}&z=18&output=embed`,
+    street_view_url: `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`,
+  };
+}
 
 const WEEKDAYS = [
   { id: 0, label: 'Domingo' }, { id: 1, label: 'Lunes' }, { id: 2, label: 'Martes' },
@@ -59,20 +73,25 @@ function ReminderRow({ title, on, onToggle, val, unit, onVal, onUnit }) {
 }
 
 export default function DatosNegocio() {
-  const { session } = usePanelAuth();
+  const { session, refreshBusinessTheme } = usePanelAuth();
   const [loading, setLoading] = useState(true);
   const [logo, setLogo] = useState('');
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
   const [address, setAddress] = useState('');
   const [addressDetail, setAddressDetail] = useState('');
+  const [lat, setLat] = useState(null);
+  const [lng, setLng] = useState(null);
+  const [showMapModal, setShowMapModal] = useState(false);
   const [policyNotice, setPolicyNotice] = useState('');
   const [minHoursAhead, setMinHoursAhead] = useState(8);
   const [slotMinutes, setSlotMinutes] = useState(40);
   const [customMode, setCustomMode] = useState(false);
   const [schedule, setSchedule] = useState({});
+  const [colorScheme, setColorScheme] = useState('mono');
+  const [customColors, setCustomColors] = useState(DEFAULT_CUSTOM_COLORS);
+  const [themeMode, setThemeMode] = useState('dark');
   const [placePhotos, setPlacePhotos] = useState([]);
-  const [pricesEnabled, setPricesEnabled] = useState(false);
 
   const [r1On, setR1On] = useState(true);
   const [r1Val, setR1Val] = useState('2');
@@ -98,13 +117,17 @@ export default function DatosNegocio() {
         setTagline(data.tagline || '');
         setAddress(data.address || '');
         setAddressDetail(data.address_detail || '');
+        setLat(data.lat ?? null);
+        setLng(data.lng ?? null);
         setPolicyNotice(data.policy_notice || '');
         setMinHoursAhead(data.min_hours_ahead ?? 8);
         setSlotMinutes(data.slot_minutes ?? 40);
         setCustomMode(!PRESET_MINUTES.includes(data.slot_minutes));
         setSchedule(cloneSchedule(data.schedule));
+        setColorScheme(data.color_scheme || 'mono');
+        setCustomColors(data.custom_colors || DEFAULT_CUSTOM_COLORS);
+        setThemeMode(data.theme_mode || 'dark');
         setPlacePhotos((data.place_photos || []).map((p) => ({ ...p })));
-        setPricesEnabled(!!data.prices_enabled);
 
         const a = splitMinutes(data.reminder1_minutes ?? 120);
         setR1On(data.reminder1_enabled ?? true);
@@ -122,6 +145,13 @@ export default function DatosNegocio() {
 
   const touch = () => { setSaved(false); setSaveError(''); };
 
+  const handleConfirmLocation = ({ lat: newLat, lng: newLng }) => {
+    touch();
+    setLat(newLat);
+    setLng(newLng);
+    setShowMapModal(false);
+  };
+
   const handleDurationSelect = (e) => {
     touch();
     if (e.target.value === 'custom') setCustomMode(true);
@@ -132,7 +162,8 @@ export default function DatosNegocio() {
     touch();
     setSchedule((prev) => ({ ...prev, [dayId]: prev[dayId].length > 0 ? [] : [['09:00', '13:00']] }));
   };
-  const addRange = (dayId) => { touch(); setSchedule((prev) => ({ ...prev, [dayId]: [...prev[dayId], ['17:00', '20:00']] })); };
+  // Arranca en blanco (00:00 a 00:00) para que se note que es un turno nuevo y haya que cargarlo entero.
+  const addRange = (dayId) => { touch(); setSchedule((prev) => ({ ...prev, [dayId]: [...prev[dayId], ['00:00', '00:00']] })); };
   const removeRange = (dayId, i) => { touch(); setSchedule((prev) => ({ ...prev, [dayId]: prev[dayId].filter((_, idx) => idx !== i) })); };
   const updateRange = (dayId, i, field, value) => {
     touch();
@@ -220,19 +251,24 @@ export default function DatosNegocio() {
     }
     setSaving(true);
     setSaveError('');
+    const locationFields = (lat != null && lng != null) ? { lat, lng, ...buildMapLinks(lat, lng) } : {};
     const { error } = await updateBusinessReal(session.businessId, {
       name, tagline, address, address_detail: addressDetail, policy_notice: policyNotice,
       min_hours_ahead: minHoursAhead, slot_minutes: slotMinutes, schedule, place_photos: placePhotos,
-      prices_enabled: pricesEnabled,
+      color_scheme: colorScheme,
+      custom_colors: colorScheme === CUSTOM_SCHEME_ID ? customColors : null,
+      theme_mode: themeMode,
       reminder1_enabled: r1On, reminder1_minutes: m1,
       reminder2_enabled: r2On, reminder2_minutes: m2,
-      reminders_to_pro: remindersToPro
+      reminders_to_pro: remindersToPro,
+      ...locationFields
     });
     setSaving(false);
     if (error) {
       setSaveError('No se pudieron guardar los cambios. Revisá los datos e intentá de nuevo.');
       return;
     }
+    await refreshBusinessTheme();
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
@@ -275,6 +311,17 @@ export default function DatosNegocio() {
           <label>Referencia (opcional)</label>
           <input type="text" value={addressDetail} onChange={(e) => { touch(); setAddressDetail(e.target.value); }} placeholder="Ej: Entre 9 de Julio y Corrientes" />
         </div>
+        <div className="dn-field">
+          <label>Ubicación en el mapa</label>
+          <button type="button" className="dn-logo-btn" onClick={() => setShowMapModal(true)}>
+            <IconPin size={16} /> {lat != null ? 'Cambiar ubicación en el mapa' : 'Confirmar ubicación en el mapa'}
+          </button>
+          <p className="dn-hint" style={{ marginTop: 8, marginBottom: 0 }}>
+            {lat != null
+              ? `Confirmada (${lat.toFixed(6)}, ${lng.toFixed(6)}). Así queda el mapa y el botón "Ver en el mapa" que ve el cliente.`
+              : 'Todavía no confirmaste el punto exacto en el mapa. Sin esto, el mapa de la web y el botón "Ver en el mapa" no van a funcionar.'}
+          </p>
+        </div>
       </div>
 
       <div className="dn-section">
@@ -301,14 +348,9 @@ export default function DatosNegocio() {
             )}
           </div>
         </div>
-        <label className="dn-toggle-row">
-          <span>Mostrar precios y total a pagar en la web</span>
-          <span className="dn-switch">
-            <input type="checkbox" checked={pricesEnabled} onChange={(e) => { touch(); setPricesEnabled(e.target.checked); }} />
-            <span className="dn-switch-track"><span className="dn-switch-thumb" /></span>
-          </span>
-        </label>
-        <p className="dn-hint">Cargá los precios en "Mis servicios" antes de activar esto.</p>
+        <p className="dn-hint">
+          El precio y si se muestra al cliente ahora se elige servicio por servicio en "Mis servicios", no acá.
+        </p>
       </div>
 
       <div className="dn-section">
@@ -351,6 +393,21 @@ export default function DatosNegocio() {
         <p className="dn-hint">
           Le llegan al correo de avisos que cada profesional cargó en "Mi perfil". Cada profesional también puede apagar sus avisos desde ahí.
         </p>
+      </div>
+
+      <div className="dn-section">
+        <h2>Colores de tu página</h2>
+        <p className="dn-hint">
+          Elegí el color de acento (botones y resaltados) y si tu página se ve con fondo oscuro o claro.
+        </p>
+        <ColorSchemePicker
+          value={colorScheme}
+          customColors={customColors}
+          onChange={(id) => { touch(); setColorScheme(id); }}
+          onCustomColorsChange={(c) => { touch(); setCustomColors(c); }}
+          themeMode={themeMode}
+          onThemeModeChange={(m) => { touch(); setThemeMode(m); }}
+        />
       </div>
 
       <div className="dn-section">
@@ -429,6 +486,14 @@ export default function DatosNegocio() {
           {saving ? 'Guardando...' : saved ? 'Guardado ✓' : 'Guardar cambios'}
         </button>
       </div>
+
+      <LocationMapModal
+        open={showMapModal}
+        initialLat={lat}
+        initialLng={lng}
+        onClose={() => setShowMapModal(false)}
+        onConfirm={handleConfirmLocation}
+      />
     </div>
   );
 }

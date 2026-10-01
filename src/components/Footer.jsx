@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { SocialIcon, IconMapPin, IconClock } from './Icons';
 import ManageBookingModal from './ManageBookingModal';
 import './Footer.css';
@@ -33,7 +34,7 @@ export default function Footer({ business }) {
         </div>
 
         <div className="ft-col">
-          <h4 className="ft-head">Nuestro equipo</h4>
+          <h4 className="ft-head">{business.professionals.length >= 2 ? 'Nuestro equipo' : 'Tu profesional'}</h4>
 
           {business.professionals.map((pro) => (
             <div key={pro.id} className="ft-person">
@@ -81,11 +82,11 @@ export default function Footer({ business }) {
       <div className="ft-bottom">
         <p>© {year} {business.name}. Todos los derechos reservados.</p>
         <div className="ft-bottom-right">
-          <button type="button" className="ft-terms">Términos y condiciones</button>
+          <Link to="/terminos" className="ft-terms">Términos y condiciones</Link>
           <span className="ft-sep">·</span>
-          <a href={business.platform.url} target="_blank" rel="noreferrer" className="ft-powered">
+          <Link to="/" className="ft-powered">
             Hecho con <strong>{business.platform.name}</strong>
-          </a>
+          </Link>
         </div>
       </div>
 

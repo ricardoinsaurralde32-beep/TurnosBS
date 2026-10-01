@@ -1,0 +1,75 @@
+.sub-head { margin-bottom: 18px; }
+.sub-head h1 { color: var(--white); font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+.sub-sub { color: var(--gray); font-size: 0.83rem; }
+
+.sub-summary {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.sub-stat {
+  flex: 1; min-width: 76px;
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 2px;
+}
+.sub-stat-n { font-size: 1.3rem; font-weight: 800; color: var(--white); }
+.sub-stat-l { font-size: 0.68rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.03em; }
+.sub-stat-trial { color: #f5c451; }
+.sub-stat-ok { color: var(--neon); }
+.sub-stat-off { color: var(--danger); }
+
+.sub-list { display: flex; flex-direction: column; gap: 10px; }
+
+.sub-card {
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.sub-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.sub-card-top h3 { color: var(--white); font-size: 0.95rem; font-weight: 700; margin: 0 0 2px; }
+.sub-email { color: var(--gray); font-size: 0.74rem; word-break: break-all; }
+
+.sub-badge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.sub-badge-ok { background-color: rgba(var(--neon-rgb), 0.12); color: var(--neon); }
+.sub-badge-trial { background-color: rgba(245,196,81,0.14); color: #f5c451; }
+.sub-badge-off { background-color: rgba(255,107,107,0.14); color: var(--danger); }
+
+.sub-trial-line {
+  margin: 8px 0 0;
+  font-size: 0.76rem;
+  color: #f5c451;
+  font-weight: 600;
+}
+
+.sub-meta {
+  display: flex; flex-wrap: wrap; gap: 4px 14px;
+  margin-top: 8px;
+  font-size: 0.76rem;
+  color: #ccc;
+}
+
+.sub-foot {
+  display: flex; flex-wrap: wrap; gap: 4px 14px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 0.7rem;
+  color: #666;
+}
+
+@media (min-width: 900px) {
+  .sub-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .sub-summary { max-width: 480px; }
+}

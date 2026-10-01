@@ -62,7 +62,9 @@ export default function MisHorarios() {
 
   const addRange = (dayId) => {
     setSaved(false);
-    setSchedule((prev) => ({ ...prev, [dayId]: [...prev[dayId], ['17:00', '20:00']] }));
+    // Arranca en blanco (00:00 a 00:00) para que se note que es un turno nuevo y haya que cargarlo entero,
+    // en vez de sugerir un horario que capaz no corresponde.
+    setSchedule((prev) => ({ ...prev, [dayId]: [...prev[dayId], ['00:00', '00:00']] }));
   };
   const removeRange = (dayId, index) => {
     setSaved(false);

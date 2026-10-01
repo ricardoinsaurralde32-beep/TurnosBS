@@ -1,18 +1,18 @@
 .ex-head { margin-bottom: 18px; }
-.ex-head h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+.ex-head h1 { color: var(--white); font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
 .ex-sub { color: var(--gray); font-size: 0.83rem; }
 
 .ex-datebar {
   display: flex; align-items: center; gap: 12px;
   margin-bottom: 18px; flex-wrap: wrap;
 }
-.ex-datebar label { color: #fff; font-size: 0.85rem; font-weight: 600; }
+.ex-datebar label { color: var(--white); font-size: 0.85rem; font-weight: 600; }
 .ex-datebar input[type="date"] {
   background-color: var(--black);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 9px 13px;
-  color: #fff;
+  color: var(--white);
   font-size: 0.88rem;
   outline: none;
   color-scheme: dark;
@@ -41,8 +41,8 @@
   transition: all 0.2s ease;
 }
 .ex-quick-btn:hover { background-color: var(--danger); color: #fff; }
-.ex-quick-open { border-color: rgba(184,241,76,0.3); background-color: rgba(184,241,76,0.08); color: var(--neon); }
-.ex-quick-open:hover { background-color: var(--neon); color: #0a0a0a; }
+.ex-quick-open { border-color: rgba(var(--neon-rgb), 0.3); background-color: rgba(var(--neon-rgb), 0.08); color: var(--neon); }
+.ex-quick-open:hover { background-color: var(--neon); color: var(--neon-ink, #0a0a0a); }
 
 .ex-date-label { color: var(--neon); font-size: 0.9rem; font-weight: 700; text-transform: capitalize; margin-bottom: 12px; }
 
@@ -63,7 +63,7 @@
 
 .ex-slot-free {
   background-color: var(--panel);
-  border-color: rgba(184,241,76,0.4);
+  border-color: rgba(var(--neon-rgb), 0.4);
 }
 .ex-slot-free .ex-slot-time { color: var(--neon); }
 .ex-slot-free .ex-slot-state { color: var(--gray); font-size: 0.72rem; margin-left: auto; }
@@ -79,12 +79,12 @@
 .ex-slot-blocked .ex-slot-state { color: var(--danger); font-size: 0.72rem; margin-left: auto; font-weight: 700; }
 
 .ex-slot-booked {
-  background-color: rgba(184,241,76,0.07);
-  border-color: rgba(184,241,76,0.35);
+  background-color: rgba(var(--neon-rgb), 0.07);
+  border-color: rgba(var(--neon-rgb), 0.35);
 }
 .ex-slot-booked .ex-slot-time { color: var(--neon); }
 .ex-slot-booked-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.ex-slot-client { color: #fff; font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ex-slot-client { color: var(--white); font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ex-slot-phone { color: var(--gray); font-size: 0.7rem; }
 
 .ex-slot-wa {
@@ -95,6 +95,14 @@
   color: #25d366;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.2s ease;
+}
+
+/* En celular la grilla de 2 columnas deja muy poco ancho para hora + nombre + teléfono + ícono
+   en la tarjeta de reservado, y todo se apreta/superpone. Le damos el ancho completo de la fila. */
+@media (max-width: 480px) {
+  .ex-slot-booked {
+    grid-column: 1 / -1;
+  }
 }
 .ex-slot-wa:hover { background-color: #25d366; color: #fff; }
 
@@ -112,6 +120,19 @@
 
 .ex-note { color: #666; font-size: 0.76rem; margin-top: 16px; }
 
+.ex-footer { position: sticky; bottom: 90px; margin-top: 26px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ex-save {
+  padding: 13px 40px; background-color: var(--neon); color: var(--neon-ink, #0a0a0a); font-weight: 800;
+  border-radius: 999px; font-size: 0.95rem; transition: all 0.25s ease; box-shadow: 0 0 20px var(--neon-soft);
+}
+.ex-save:hover { transform: translateY(-2px); box-shadow: 0 0 28px var(--neon-soft); }
+.ex-save:disabled { opacity: 0.7; transform: none; }
+.ex-footer-hint { color: #666; font-size: 0.74rem; text-align: center; max-width: 320px; }
+
+@media (min-width: 900px) {
+  .ex-footer { bottom: 0; align-items: flex-start; }
+}
+
 @media (min-width: 900px) {
   .ex-slots { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 }
@@ -128,7 +149,7 @@
   padding-top: 20px;
   border-top: 1px solid var(--border);
 }
-.ex-summary h2 { color: #fff; font-size: 0.92rem; font-weight: 700; margin-bottom: 12px; }
+.ex-summary h2 { color: var(--white); font-size: 0.92rem; font-weight: 700; margin-bottom: 12px; }
 
 .ex-summary-list { display: flex; flex-direction: column; gap: 6px; }
 
@@ -144,7 +165,7 @@
   font-size: 0.82rem;
   transition: all 0.2s ease;
 }
-.ex-summary-row:hover { border-color: rgba(184,241,76,0.35); }
-.ex-summary-row.active { border-color: var(--neon); background-color: rgba(184,241,76,0.06); }
+.ex-summary-row:hover { border-color: rgba(var(--neon-rgb), 0.35); }
+.ex-summary-row.active { border-color: var(--neon); background-color: rgba(var(--neon-rgb), 0.06); }
 
 .ex-summary-count { color: var(--gray); font-size: 0.76rem; }
