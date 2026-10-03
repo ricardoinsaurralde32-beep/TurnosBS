@@ -241,9 +241,11 @@
 }
 
 /* ================= PROFESIONALES ================= */
-.pro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 30px; }
+.pro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 30px; align-items: stretch; }
 
-.pro-card { text-align: center; padding: 6px; transition: transform 0.3s ease; }
+.pro-card { text-align: center; padding: 6px; transition: transform 0.3s ease; display: flex; flex-direction: column; align-items: center; }
+.pro-card .pro-desc { flex: 1 1 auto; }
+.pro-actions { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .pro-card:hover { transform: translateY(-4px); }
 
 .pro-ring {
@@ -326,7 +328,7 @@
 
 .pro-desc {
   color: var(--gray); font-size: 0.8rem; line-height: 1.4;
-  margin-bottom: 14px; min-height: 66px;
+  margin-bottom: 14px; min-height: 0;
 }
 
 /* ================= DÍAS RÁPIDOS ================= */
@@ -752,3 +754,34 @@
   justify-content: center;
   background-color: var(--black);
 }
+
+/* Vista grande de la foto del profesional */
+.pv-clickable { cursor: zoom-in; }
+.pv-overlay {
+  position: fixed; inset: 0; z-index: 10000; background: rgba(0, 0, 0, 0.88);
+  display: flex; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out;
+}
+.pv-figure { margin: 0; max-width: min(92vw, 560px); display: flex; flex-direction: column; align-items: center; gap: 12px; cursor: default; }
+.pv-figure img {
+  width: 100%; max-height: 78vh; object-fit: contain; border-radius: 18px;
+  box-shadow: 0 0 40px rgba(184, 241, 76, 0.35);
+}
+.pv-figure figcaption { color: #fff; font-weight: 700; font-size: 1rem; letter-spacing: 0.3px; }
+.pv-close {
+  position: absolute; top: calc(env(safe-area-inset-top, 0px) + 14px); right: 16px;
+  width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 1.7rem; line-height: 1; cursor: pointer;
+}
+.pro-actions .pro-portfolio-btn { margin-bottom: 0; }
+
+.reviews-more { display: block; margin: 14px auto 0; padding: 9px 22px; border-radius: 999px; border: 1px solid rgba(var(--neon-rgb), 0.35); background: rgba(var(--neon-rgb), 0.06); color: var(--neon); font-weight: 700; font-size: 0.8rem; cursor: pointer; }
+.reviews-more:hover { background: rgba(var(--neon-rgb), 0.14); }
+
+/* Duración de cada turno */
+.duration-pill {
+  display: inline-flex; align-items: center; gap: 6px; margin: 0 auto 10px;
+  padding: 5px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
+  color: var(--neon); background: rgba(var(--neon-rgb), 0.1); border: 1px solid rgba(var(--neon-rgb), 0.3);
+}
+.duration-pill::before { content: ''; width: 8px; height: 8px; border-radius: 50%; border: 2px solid currentColor; box-sizing: border-box; }
+.duration-pill-c { display: flex; width: fit-content; }

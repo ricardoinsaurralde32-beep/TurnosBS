@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { usePanelAuth } from '../PanelAuthContext';
-import { business } from '../../config/business';
-import { fetchOwnProfessional, updateProfessional } from '../../lib/api';
+import { fetchOwnProfessional, updateProfessional, fetchBusinessById } from '../../lib/api';
 import './MisHorarios.css';
 
 const WEEKDAYS = [
@@ -31,8 +30,12 @@ export default function MisHorarios() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data } = await fetchOwnProfessional(session.professionalId);
-      const initial = data?.schedule ? cloneSchedule(data.schedule) : cloneSchedule(business.schedule);
+      const [{ data }, { data: biz }] = await Promise.all([
+        fetchOwnProfessional(session.professionalId),
+        fetchBusinessById(session.businessId)
+      ]);
+      // Si el profesional todavía no tiene horario propio, parte del horario base de SU negocio
+      const initial = data?.schedule ? cloneSchedule(data.schedule) : cloneSchedule(biz?.schedule);
       setSchedule(initial);
       setUsesOwnSchedule(!!data?.schedule);
 
@@ -43,7 +46,7 @@ export default function MisHorarios() {
 
       setLoading(false);
     })();
-  }, [session.professionalId]);
+  }, [session.professionalId, session.businessId]);
 
   const toggleDayOff = (dayId) => {
     setSaved(false);

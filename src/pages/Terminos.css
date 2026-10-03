@@ -23,7 +23,7 @@
 .tc-hl-card { display: flex; flex-direction: column; gap: 5px; padding: 16px 18px; border-radius: 18px; border: 1px solid var(--border); background: var(--panel); }
 .tc-hl-card strong { font-size: 16px; }
 .tc-hl-card > span:last-child { color: var(--gray); font-size: 14px; line-height: 1.45; }
-.ms { font-family: 'Material Symbols Rounded'; font-weight: 500; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; display: inline-block; overflow: hidden; -webkit-font-smoothing: antialiased; font-feature-settings: 'liga'; user-select: none; }
+.gicon { font-family: 'Material Symbols Rounded'; font-weight: 500; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; display: inline-block; overflow: hidden; -webkit-font-smoothing: antialiased; font-feature-settings: 'liga'; user-select: none; }
 .tc-ic { font-size: 28px; width: 28px; height: 28px; color: var(--neon); }
 
 .tc-toc { position: sticky; top: 3px; z-index: 40; display: flex; gap: 8px; overflow-x: auto; padding: 12px 18px; margin-top: 18px; background: rgba(8, 9, 10, 0.96); border-bottom: 1px solid var(--border); scrollbar-width: none; }

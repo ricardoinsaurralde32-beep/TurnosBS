@@ -96,19 +96,32 @@ export default function PlaceModal({ business, initialTab = 'map', professional,
               </div>
             </>
           ) : (
-            <div className="pm-gallery">
-              {photos.map((p, i) => (
-                <button
-                  key={i}
-                  className="pm-thumb"
-                  onClick={() => setLightbox(p)}
-                  type="button"
-                >
-                  <img src={p.src} alt={p.caption || `Foto ${i + 1}`} />
-                  {p.owner && <span className="pm-owner-badge">{p.owner}</span>}
-                  {p.caption && <span className="pm-thumb-caption">{p.caption}</span>}
-                </button>
-              ))}
+            <div className="pm-gallery-wrap">
+              {generalPhotos.length > 0 && (
+                <div className="pm-gallery">
+                  {generalPhotos.map((p, i) => (
+                    <button key={`g${i}`} className="pm-thumb" onClick={() => setLightbox(p)} type="button">
+                      <img src={p.src} alt={p.caption || `Foto ${i + 1}`} />
+                      {p.caption && <span className="pm-thumb-caption">{p.caption}</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {proPhotos.length > 0 && (
+                <>
+                  {generalPhotos.length > 0 && (
+                    <h4 className="pm-subtitle">Espacio de {professional.name}</h4>
+                  )}
+                  <div className="pm-gallery">
+                    {proPhotos.map((p, i) => (
+                      <button key={`p${i}`} className="pm-thumb" onClick={() => setLightbox(p)} type="button">
+                        <img src={p.src} alt={p.caption || `Foto ${i + 1}`} />
+                        {p.caption && <span className="pm-thumb-caption">{p.caption}</span>}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>

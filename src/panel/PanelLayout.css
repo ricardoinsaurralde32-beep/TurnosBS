@@ -224,3 +224,8 @@
   transition: color 0.2s ease;
 }
 .pnl-home-link:hover { color: var(--neon); }
+/* Menú "Más opciones" del celular: si la lista es larga, se desliza (antes se cortaba) */
+.pnl-drawer { max-height: 86vh; max-height: 86dvh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--neon) transparent; }
+.pnl-drawer::-webkit-scrollbar { width: 5px; }
+.pnl-drawer::-webkit-scrollbar-thumb { background: var(--neon); border-radius: 99px; }
+.pnl-drawer-head { position: sticky; top: 0; z-index: 1; background-color: var(--panel); }

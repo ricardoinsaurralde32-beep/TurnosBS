@@ -24,7 +24,7 @@
 
 /* nav */
 .ph-nav { position: fixed; top: 3px; left: 0; right: 0; z-index: 40; display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: linear-gradient(#08090a, rgba(8, 9, 10, 0)); }
-.ms { font-family: 'Material Symbols Rounded'; font-weight: 500; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; flex: none; -webkit-font-smoothing: antialiased; font-feature-settings: 'liga'; user-select: none; }
+.gicon { font-family: 'Material Symbols Rounded'; font-weight: 500; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; flex: none; -webkit-font-smoothing: antialiased; font-feature-settings: 'liga'; user-select: none; }
 .ph-logo { display: inline-block; font-weight: 800; font-size: 22px; letter-spacing: -0.5px; color: var(--white); }
 .ph-logo b { color: var(--neon); font-weight: 800; }
 .ph-logo-img { display: inline-flex; }
@@ -118,7 +118,7 @@
 .ph-amount small { font-size: 16px; color: var(--gray); font-weight: 600; margin-left: 4px; }
 .ph-price ul { list-style: none; padding: 0; margin: 20px 0 24px; display: flex; flex-direction: column; gap: 10px; text-align: left; }
 .ph-price li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; line-height: 1.4; }
-.ph-price li .ms { flex: none; color: var(--neon); margin-top: 1px; }
+.ph-price li .gicon { flex: none; color: var(--neon); margin-top: 1px; }
 
 .ph-how { padding-bottom: 34px; }
 .ph-pricing { padding-top: 14px; padding-bottom: 30px; }
@@ -217,3 +217,36 @@
 /* menos espacio entre "funciones" y "empezar es muy simple" */
 #funciones.ph-sec { padding-bottom: 34px; }
 .ph-how { padding-top: 38px; }
+
+.ph-price-tag {
+  display: inline-block; margin: 2px 0 10px; padding: 4px 12px; border-radius: 999px;
+  background: rgba(184, 241, 76, 0.14); color: var(--neon); border: 1px solid rgba(184, 241, 76, 0.4);
+  font-size: 12px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+}
+
+.ph-example { padding-top: 10px; padding-bottom: 30px; }
+.ph-ex-card { max-width: 560px; margin: 0 auto; padding: 26px 20px; border-radius: 22px; border: 1px solid rgba(184, 241, 76, 0.28); background: rgba(255, 255, 255, 0.03); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.ph-ex-card h2 { margin: 0; }
+.ph-ex-card p { margin: 0; color: rgba(255, 255, 255, 0.72); line-height: 1.5; font-size: 0.95rem; }
+
+/* ===== Botones con movimiento ===== */
+.ph-btn-go { position: relative; overflow: hidden; gap: 10px; }
+.ph-btn-go::after { content: '\2192'; font-size: 1.15em; line-height: 1; transition: transform 0.25s ease; animation: phNudge 1.6s ease-in-out infinite; }
+.ph-btn-go:hover::after { animation: none; transform: translateX(6px); }
+.ph-btn-go:hover { transform: translateY(-2px); }
+.ph-btn-shine::before {
+  content: ''; position: absolute; top: 0; left: -80%; width: 50%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.55), transparent);
+  transform: skewX(-20deg); animation: phShine 3.2s ease-in-out infinite; pointer-events: none;
+}
+.ph-btn-pulse { animation: phPulse 2.4s ease-in-out infinite; }
+.ph-btn-big { padding: 18px 28px; font-size: 18px; border-radius: 16px; letter-spacing: 0.2px; }
+@keyframes phNudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+@keyframes phShine { 0% { left: -80%; } 55%, 100% { left: 140%; } }
+@keyframes phPulse {
+  0%, 100% { box-shadow: 0 8px 26px rgba(184, 241, 76, 0.25), 0 0 0 0 rgba(184, 241, 76, 0.45); }
+  50% { box-shadow: 0 10px 34px rgba(184, 241, 76, 0.4), 0 0 0 12px rgba(184, 241, 76, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ph-btn-go::after, .ph-btn-shine::before, .ph-btn-pulse { animation: none; }
+}

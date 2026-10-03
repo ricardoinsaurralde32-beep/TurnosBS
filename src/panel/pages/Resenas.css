@@ -26,4 +26,4 @@
 
 @media (min-width: 900px) {
   .rv-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
-}
+}.rv-more { display: block; margin: 16px auto 0; padding: 9px 22px; border-radius: 999px; border: 1px solid var(--border); background: none; color: var(--neon); font-weight: 700; font-size: 0.8rem; cursor: pointer; }

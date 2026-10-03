@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePanelAuth } from '../panel/PanelAuthContext';
+import { fetchPublicPlan } from '../lib/api';
 import './PlatformHome.css';
 
 /* Precio que se muestra en el inicio (cambialo acá cuando lo confirmes con el barbero) */
-const PRICE_LABEL = '17.700';
+const PRICE_FALLBACK = 17900; // se usa solo si la base no responde
 
 /* ---------- Iconos (SVG simples) ---------- */
 const GLYPHS = {
@@ -16,7 +17,7 @@ const GLYPHS = {
 /* Iconos de Google (Material Symbols) */
 function Icon({ name, size = 24 }) {
   return (
-    <span className="ms" aria-hidden="true" style={{ fontSize: size, width: size, height: size }}>
+    <span className="gicon" aria-hidden="true" style={{ fontSize: size, width: size, height: size }}>
       {GLYPHS[name]}
     </span>
   );
@@ -188,6 +189,14 @@ const goTo = (id) => (e) => {
 
 export default function PlatformHome() {
   const { session } = usePanelAuth();
+  const [plan, setPlan] = useState({});
+  useEffect(() => {
+    let alive = true;
+    fetchPublicPlan().then((p) => { if (alive) setPlan(p || {}); });
+    return () => { alive = false; };
+  }, []);
+  const priceText = (plan.price_ars || PRICE_FALLBACK).toLocaleString('es-AR');
+  const trialN = plan.trial_days != null ? plan.trial_days : 7;
   const logged = !!session;
   const ctaTo = logged ? '/panel' : '/registro';
   const [open, setOpen] = useState(null);
@@ -307,21 +316,32 @@ export default function PlatformHome() {
         </div>
       </section>
 
+      {/* EJEMPLO REAL */}
+      <section id="ejemplo" className="ph-sec ph-example">
+        <div className="ph-ex-card ph-rv ph-zoom">
+          <span className="ph-pill"><Icon name="spark" size={14} /> Ya está en uso</span>
+          <h2>Mirá cómo lo usa <em>Barber Studio</em></h2>
+          <p>Es una barbería real que ya recibe sus turnos con TurnosBS. Entrá a su página y probá reservar como lo haría un cliente.</p>
+          <a className="ph-btn ph-btn-main ph-btn-go ph-btn-shine" href="/barber-studio" target="_blank" rel="noopener noreferrer"><span>Ver su página de reservas</span></a>
+        </div>
+      </section>
+
       {/* PRECIO */}
       <section id="precio" className="ph-sec ph-pricing">
         <div className="ph-price ph-rv ph-zoom">
           <span className="ph-pill"><Icon name="gift" size={14} /> Probalo gratis</span>
-          <div className="ph-amount"><span>$</span>{PRICE_LABEL}<small>/mes</small></div>
+          <div className="ph-amount"><span>$</span>{priceText}<small>/mes</small></div>
+          {plan.price_label && <span className="ph-price-tag">{plan.price_label}</span>}
           <div className="ph-free">
             <strong>No se cobra nada hoy</strong>
-            <span>Tenés 7 días de prueba sin cargo para vivir la experiencia. Recién después empieza el cobro, y podés cancelar antes cuando quieras.</span>
+            <span>{trialN > 0 ? `Tenés ${trialN} ${trialN === 1 ? 'día' : 'días'} de prueba sin cargo para vivir la experiencia. Recién después empieza el cobro, y podés cancelar antes cuando quieras.` : 'Cancelás cuando quieras.'}</span>
           </div>
           <ul>
-            <li><Icon name="check" size={18} /> 7 días de prueba para vivir la experiencia</li>
+            {trialN > 0 && <li><Icon name="check" size={18} /> {trialN} {trialN === 1 ? 'día' : 'días'} de prueba para vivir la experiencia</li>}
             <li><Icon name="check" size={18} /> Turnos, profesionales y recordatorios sin límites</li>
             <li><Icon name="check" size={18} /> Cancelás cuando quieras</li>
           </ul>
-          <Link to={ctaTo} className="ph-btn ph-btn-main ph-btn-block">{logged ? 'Ir a mi panel' : 'Empezar mi prueba'}</Link>
+          <Link to={ctaTo} className="ph-btn ph-btn-main ph-btn-block ph-btn-big ph-btn-go ph-btn-shine ph-btn-pulse"><span>{logged ? 'Ir a mi panel' : (trialN > 0 ? `Probar gratis ${trialN} ${trialN === 1 ? 'día' : 'días'}` : 'Empezar mi prueba')}</span></Link>
         </div>
       </section>
 

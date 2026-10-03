@@ -6,6 +6,7 @@ import './Resenas.css';
 export default function Resenas() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [shown, setShown] = useState(15);
 
   useEffect(() => {
     (async () => {
@@ -39,7 +40,7 @@ export default function Resenas() {
         <div className="rv-empty"><p>Todavía no hay reseñas.</p></div>
       ) : (
         <div className="rv-list">
-          {reviews.map((r) => (
+          {reviews.slice(0, shown).map((r) => (
             <div key={r.id} className={`rv-card ${r.approved ? 'approved' : ''}`}>
               <div className="rv-stars">
                 {[1, 2, 3, 4, 5].map((n) => <IconStar key={n} size={15} filled={n <= r.rating} />)}
@@ -64,6 +65,11 @@ export default function Resenas() {
             </div>
           ))}
         </div>
+      )}
+      {reviews.length > shown && (
+        <button type="button" className="rv-more" onClick={() => setShown((n) => n + 15)}>
+          Ver más ({reviews.length - shown} restantes)
+        </button>
       )}
     </div>
   );

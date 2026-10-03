@@ -94,8 +94,17 @@ function AuthBackground() {
   );
 }
 
+// Borrador del formulario: si se refresca o se cierra la página a mitad de camino, se recupera lo cargado
+// (las fotos/logo no se guardan porque son archivos: hay que volver a elegirlas).
+const DRAFT_KEY = 'nb-draft-v1';
+function readDraft() {
+  try { const raw = localStorage.getItem(DRAFT_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
+}
+function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch { /* sin almacenamiento */ } }
+
 export default function NewBusiness() {
   const [checking, setChecking] = useState(true);
+  const [draftReady, setDraftReady] = useState(false);
   const [step, setStep] = useState(0);
 
   // Paso 1: datos básicos
@@ -156,9 +165,43 @@ export default function NewBusiness() {
         navigate('/panel', { replace: true });
         return;
       }
+      const d = readDraft();
+      if (d) {
+        if (typeof d.step === 'number') setStep(d.step);
+        if (d.name != null) setName(d.name);
+        if (d.slug != null) setSlug(d.slug);
+        if (d.slugTouched != null) setSlugTouched(d.slugTouched);
+        if (d.proName != null) setProName(d.proName);
+        if (d.tagline != null) setTagline(d.tagline);
+        if (d.colorScheme) setColorScheme(d.colorScheme);
+        if (d.customColors) setCustomColors(d.customColors);
+        if (d.themeMode) setThemeMode(d.themeMode);
+        if (d.schedule) setSchedule(d.schedule);
+        if (d.proRole != null) setProRole(d.proRole);
+        if (Array.isArray(d.socials)) setSocials(d.socials);
+        if (d.address != null) setAddress(d.address);
+        if (d.addressDetail != null) setAddressDetail(d.addressDetail);
+        if (d.lat != null) setLat(d.lat);
+        if (d.lng != null) setLng(d.lng);
+      }
       setChecking(false);
+      setDraftReady(true);
     })();
   }, [navigate]);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          step, name, slug, slugTouched, proName, tagline, colorScheme, customColors, themeMode,
+          schedule, proRole, socials, address, addressDetail, lat, lng,
+        }));
+      } catch { /* sin almacenamiento */ }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [draftReady, step, name, slug, slugTouched, proName, tagline, colorScheme, customColors, themeMode,
+      schedule, proRole, socials, address, addressDetail, lat, lng]);
 
   const handleNameChange = (value) => {
     setName(value);
@@ -341,6 +384,7 @@ export default function NewBusiness() {
 
     // La sesión del panel todavía no sabe que ya sos dueño: se recarga el perfil y se entra directo
     // a "Suscripción" para activar la cuenta (sin pasar por iniciar sesión otra vez).
+    clearDraft();
     await reloadProfile();
     setLoading(false);
     navigate('/panel/suscripcion', { replace: true });

@@ -95,7 +95,7 @@ export default function Terminos() {
       <section className="tc-hl" aria-label="Lo más importante">
         {HIGHLIGHTS.map((h, i) => (
           <div key={h.t} className="tc-hl-card tc-rv" style={{ '--i': i }}>
-            <span className="ms tc-ic" aria-hidden="true">{h.icon}</span>
+            <span className="gicon tc-ic" aria-hidden="true">{h.icon}</span>
             <strong>{h.t}</strong>
             <span>{h.d}</span>
           </div>
@@ -116,7 +116,7 @@ export default function Terminos() {
             <div className="tc-card-head">
               <span className="tc-num">{i + 1}</span>
               <h2>{s.title}</h2>
-              <span className="ms tc-emoji" aria-hidden="true">{s.icon}</span>
+              <span className="gicon tc-emoji" aria-hidden="true">{s.icon}</span>
             </div>
             {s.body.map((p) => <p key={p}>{p}</p>)}
           </article>

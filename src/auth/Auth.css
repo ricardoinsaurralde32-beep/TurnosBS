@@ -457,3 +457,6 @@
 .auth-title { font-size: 1.2rem; margin-bottom: 4px; }
 .auth-sub { margin-bottom: 14px; }
 .auth-field { margin-bottom: 11px; }
+
+/* Pantalla "Revisá tu correo": título centrado como el resto */
+.auth-card:has(.auth-success) .auth-title { text-align: center; }

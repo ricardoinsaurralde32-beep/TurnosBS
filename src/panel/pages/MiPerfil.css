@@ -187,3 +187,19 @@
 
   .mp-footer { bottom: 0; justify-content: flex-start; }
 }
+.mp-adjust { align-self: center; background: none; border: 1px solid var(--border); color: var(--neon); border-radius: 999px; padding: 6px 12px; font-size: 0.74rem; font-weight: 700; cursor: pointer; }
+.mp-photo-col { display: flex; flex-direction: column; align-items: center; gap: 12px; flex: 0 0 auto; }
+.mp-limit-msg { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.4); color: #c0392b; font-size: 0.8rem; }
+.mp-photo-add.drag { border-color: var(--neon); background-color: rgba(var(--neon-rgb), 0.16); }
+.mp-photo-add { text-align: center; padding: 8px; box-sizing: border-box; }
+.mp-photo-add span { text-align: center; line-height: 1.25; }
+.mp-drop-hint { font-size: 0.66rem; color: var(--gray); display: none; }
+@media (hover: hover) and (pointer: fine) { .mp-drop-hint { display: block; } }
+
+.mp-photo-col { max-width: 220px; }
+.mp-photo-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.mp-pill { display: inline-flex; align-items: center; justify-content: center; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(var(--neon-rgb), 0.45); background: rgba(var(--neon-rgb), 0.08); color: var(--neon); font-size: 0.76rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.mp-pill:hover { background: rgba(var(--neon-rgb), 0.18); }
+.mp-pill:disabled { opacity: 0.6; cursor: default; }
+.mp-photo-note { margin: 0; text-align: center; color: var(--gray); font-size: 0.7rem; line-height: 1.4; }
+.mp-card { min-width: 0; }

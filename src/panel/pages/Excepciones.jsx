@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { usePanelAuth } from '../PanelAuthContext';
-import { business } from '../../config/business';
-import { fetchBlockedSlotsMap, blockSlotReal, unblockSlotReal, fetchBookings } from '../../lib/api';
+import { useBusinessCatalog } from '../useBusinessCatalog';
+import { fetchBlockedSlotsMap, blockSlotReal, unblockSlotReal, unblockAllSlotsReal, fetchBookings } from '../../lib/api';
 import { IconWhatsapp } from '../../components/Icons';
 import './Excepciones.css';
 
@@ -25,8 +25,8 @@ function shortDate(key) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-function baseSlots(pro, date) {
-  const schedule = pro?.schedule || business.schedule;
+function baseSlots(pro, date, businessSchedule) {
+  const schedule = pro?.schedule || businessSchedule;
   const ranges = schedule?.[date.getDay()] || [];
   // Cada rango "desde-hasta" es UN turno (no se subdivide), igual que en Landing.jsx.
   return ranges.map(([from]) => from).sort();
@@ -34,7 +34,8 @@ function baseSlots(pro, date) {
 
 export default function Excepciones() {
   const { session } = usePanelAuth();
-  const pro = business.professionals.find((p) => p.name === session.name);
+  const { business: biz, professionals: catalogPros } = useBusinessCatalog(session.businessId);
+  const pro = catalogPros.find((p) => p.id === session.professionalId);
 
   const [date, setDate] = useState(todayKey());
   const [fullMap, setFullMap] = useState({}); // { 'YYYY-MM-DD': ['09:00', ...] } TODAS las fechas bloqueadas
@@ -43,6 +44,8 @@ export default function Excepciones() {
   const [flash, setFlash] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [confirmAll, setConfirmAll] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
 
   const showFlash = () => {
     setFlash('Guardado ✓');
@@ -85,7 +88,7 @@ export default function Excepciones() {
   }, [date, session.professionalId]);
 
   const blocked = fullMap[date] || [];
-  const slots = pro ? baseSlots(pro, keyToDate(date)) : [];
+  const slots = pro ? baseSlots(pro, keyToDate(date), biz?.schedule) : [];
 
   const toggle = async (time) => {
     const isBlocked = blocked.includes(time);
@@ -117,12 +120,23 @@ export default function Excepciones() {
     showFlash();
   };
 
+  const reactivateAll = async () => {
+    setReactivating(true);
+    await unblockAllSlotsReal(session.professionalId, todayKey());
+    const map = await fetchBlockedSlotsMap(session.professionalId);
+    setFullMap(map);
+    setReactivating(false);
+    setConfirmAll(false);
+    showFlash();
+  };
+
   const allFreeBlocked = freeSlots.length > 0 && freeSlots.every((t) => blocked.includes(t));
 
   // Todas las fechas (desde hoy) que tienen al menos un horario bloqueado
   const blockedDatesSummary = Object.entries(fullMap)
     .filter(([k, times]) => times.length > 0 && k >= todayKey())
     .sort(([a], [b]) => a.localeCompare(b));
+  const totalBlocked = blockedDatesSummary.reduce((n, [, times]) => n + times.length, 0);
 
   return (
     <div className="ex">
@@ -130,6 +144,27 @@ export default function Excepciones() {
         <h1>Bloquear horarios</h1>
         <p className="ex-sub">Elegí un día y desactivá los turnos que no quieras ofrecer. Se guarda solo, al toque.</p>
       </div>
+
+      {blockedDatesSummary.length > 0 && (
+        <div className="ex-reactivate">
+          <div className="ex-reactivate-txt">
+            <strong>Tenés {totalBlocked} horario{totalBlocked !== 1 ? 's' : ''} bloqueado{totalBlocked !== 1 ? 's' : ''}</strong>
+            <span>en {blockedDatesSummary.length} día{blockedDatesSummary.length !== 1 ? 's' : ''}. Los clientes no los pueden reservar.</span>
+          </div>
+          {confirmAll ? (
+            <div className="ex-reactivate-btns">
+              <button type="button" className="ex-quick-btn ex-quick-open" onClick={reactivateAll} disabled={reactivating}>
+                {reactivating ? 'Reactivando...' : 'Sí, reactivar todos'}
+              </button>
+              <button type="button" className="ex-quick-btn" onClick={() => setConfirmAll(false)}>Cancelar</button>
+            </div>
+          ) : (
+            <button type="button" className="ex-quick-btn ex-quick-open" onClick={() => setConfirmAll(true)}>
+              Reactivar todos los horarios
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="ex-datebar">
         <label>Fecha</label>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePanelAuth } from '../PanelAuthContext';
-import { fetchMySubscription, createMpSubscription, syncMpSubscription, cancelMpSubscription } from '../../lib/api';
+import { fetchMySubscription, createMpSubscription, syncMpSubscription, cancelMpSubscription, fetchPublicPlan } from '../../lib/api';
 import { getBilling } from '../../utils/billing';
 import './Suscripcion.css';
 
@@ -46,6 +46,12 @@ export default function Suscripcion() {
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [priceLabel, setPriceLabel] = useState('');
+  useEffect(() => {
+    let alive = true;
+    fetchPublicPlan().then((p) => { if (alive) setPriceLabel(p?.price_label || ''); });
+    return () => { alive = false; };
+  }, []);
 
   const load = async () => {
     const { data } = await fetchMySubscription(session.businessId);
@@ -132,7 +138,7 @@ export default function Suscripcion() {
   const trialLeft = daysLeft(sub.trial_ends_at);
 
   let status = STATUS_LABEL[sub.subscription_status] || { text: sub.subscription_status, tone: 'trial' };
-  if (billing.exempt) status = { text: 'Cuenta propietaria', tone: 'active' };
+  if (billing.exempt) status = { text: 'Sin cobro', tone: 'active' };
   else if (suspended) status = { text: 'Suspendida', tone: 'bad' };
   else if (onboarding) status = { text: 'Pendiente de activación', tone: 'warn' };
 
@@ -144,7 +150,7 @@ export default function Suscripcion() {
   const firstChargeDate = formatDate(new Date(Date.now() + trialDays * DAY_MS));
   const nextChargeDate = formatDate(sub.next_payment_at);
 
-  // ---------- Cuenta propietaria: nunca paga ----------
+  // ---------- Cuenta sin cobro: nunca paga ----------
   if (billing.exempt) {
     return (
       <div className="sc">
@@ -155,12 +161,12 @@ export default function Suscripcion() {
         <div className="sc-card">
           <div className="sc-card-top">
             <div>
-              <div className="sc-plan-name">Cuenta propietaria</div>
+              <div className="sc-plan-name">Acceso sin cargo</div>
               <div className="sc-plan-price">Sin cobro</div>
             </div>
             <span className={`sc-badge sc-badge-${status.tone}`}>{status.text}</span>
           </div>
-          <p className="sc-trial-line">Esta cuenta es la dueña de la plataforma: no se cobra ni se suspende.</p>
+          <p className="sc-trial-line">Tu cuenta tiene acceso completo a TurnosBS sin pagar suscripción: no se cobra ni se suspende.</p>
         </div>
       </div>
     );
@@ -187,6 +193,7 @@ export default function Suscripcion() {
           <div>
             <div className="sc-plan-name">{plan?.name || 'Plan estándar'}</div>
             <div className="sc-plan-price">{priceText ? `${priceText} / mes` : ''}</div>
+            {priceLabel && <div className="sc-launch">{priceLabel}</div>}
           </div>
           <span className={`sc-badge sc-badge-${status.tone}`}>{status.text}</span>
         </div>

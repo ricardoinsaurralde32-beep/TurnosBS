@@ -27,6 +27,7 @@ import Bloqueados from './panel/pages/Bloqueados';
 import DatosNegocio from './panel/pages/DatosNegocio';
 import Suscripcion from './panel/pages/Suscripcion';
 import Suscriptores from './panel/pages/Suscriptores';
+import PwaSupport from './pwa/PwaSupport';
 import './styles/main.css';
 
 // Único negocio que puede ver el panel de suscriptores del SaaS (Richard, dueño de Barber Studio).
@@ -103,6 +104,7 @@ export default function App() {
     <BrowserRouter>
       <PanelAuthProvider>
         <ScrollToTop />
+        <PwaSupport />
         <Routes>
           <Route path="/" element={<RootRoute />} />
           <Route path="/baja" element={<BajaRecordatorios />} />

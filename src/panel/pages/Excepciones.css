@@ -169,3 +169,9 @@
 .ex-summary-row.active { border-color: var(--neon); background-color: rgba(var(--neon-rgb), 0.06); }
 
 .ex-summary-count { color: var(--gray); font-size: 0.76rem; }
+.ex-reactivate { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; margin-bottom: 16px; border: 1px solid rgba(var(--neon-rgb), 0.4); border-radius: 14px; background: rgba(var(--neon-rgb), 0.07); }
+.ex-reactivate-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 200px; }
+.ex-reactivate-txt strong { color: var(--white); font-size: 0.9rem; }
+.ex-reactivate-txt span { color: var(--gray); font-size: 0.78rem; }
+.ex-reactivate-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.ex-reactivate .ex-quick-btn { white-space: nowrap; }

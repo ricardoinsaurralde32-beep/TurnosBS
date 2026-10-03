@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { normalizeImage } from '../utils/normalizeImage';
+import { formatDuration } from '../utils/hoursSummary';
 import { useParams } from 'react-router-dom';
 import Calendar from './Calendar';
 import ThankYouModal from './ThankYouModal';
 import PlaceModal from './PlaceModal';
+import PortfolioModal from './PortfolioModal';
 import ProCard from './ProCard';
 import Footer from './Footer';
 import { IconMapPin, IconImage, IconCamera, IconX, IconCalendar } from './Icons';
@@ -146,6 +149,8 @@ export default function Landing() {
   const [showModal, setShowModal] = useState(false);
   const [lastIcs, setLastIcs] = useState(null);
   const [placeTab, setPlaceTab] = useState(null);
+  const [portfolioPro, setPortfolioPro] = useState(null);
+  const [reviewsShown, setReviewsShown] = useState(12);
   const [linkWarning, setLinkWarning] = useState('');
   const [glowSlot, setGlowSlot] = useState(-1);
   const [ripple, setRipple] = useState(null);
@@ -512,9 +517,10 @@ export default function Landing() {
   };
 
   const handlePhoto = async (e) => {
-    const file = e.target.files?.[0];
+    const picked = e.target.files?.[0];
     e.target.value = '';
-    if (!file) return;
+    if (!picked) return;
+    const file = await normalizeImage(picked);
 
     if (!file.type.startsWith('image/')) {
       setErrors((prev) => ({ ...prev, photo: 'El archivo tiene que ser una imagen' }));
@@ -713,6 +719,7 @@ export default function Landing() {
               seed={i + 1}
               isActive={professional?.id === pro.id}
               onChoose={() => handleSelectPro(pro)}
+              onViewPortfolio={setPortfolioPro}
             />
           ))}
         </div>
@@ -722,7 +729,7 @@ export default function Landing() {
         <section className="section section-reviews">
           <h2 className="section-title">Lo que dicen nuestros clientes</h2>
           <div className="reviews-row">
-            {approvedReviews.map((r) => (
+            {approvedReviews.slice(0, reviewsShown).map((r) => (
               <div key={r.id} className="review-card">
                 <span className="review-quote">"</span>
                 <div className="review-stars">
@@ -741,6 +748,11 @@ export default function Landing() {
               </div>
             ))}
           </div>
+          {approvedReviews.length > reviewsShown && (
+            <button type="button" className="reviews-more" onClick={() => setReviewsShown((n) => n + 12)}>
+              Ver más reseñas
+            </button>
+          )}
         </section>
       )}
 
@@ -800,6 +812,7 @@ export default function Landing() {
               <p className="section-sub">
                 {selectedDate.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · {professional.name}
               </p>
+              {businessData.slotMinutes ? <p className="duration-pill duration-pill-c">Cada turno dura {formatDuration(businessData.slotMinutes)}</p> : null}
 
               {slots.length > 0 ? (
                 <div className="slot-grid" key={currentKey} ref={slotGridRef}>
@@ -911,6 +924,7 @@ export default function Landing() {
 
             <div className="field field-center">
               <label>*Servicios</label>
+              {businessData.slotMinutes ? <p className="duration-pill">Cada turno dura {formatDuration(businessData.slotMinutes)}</p> : null}
               <div className="service-chips">
                 {proServices.map((s) => (
                   <button key={s.id} type="button"
@@ -932,9 +946,9 @@ export default function Landing() {
 
             {businessData.features?.referencePhoto && (
               <div className="field">
-                <label>Foto de referencia (opcional)</label>
+                <label>{businessData.referencePhotoLabel || 'Foto de referencia (opcional)'}</label>
                 <p className="field-hint">
-                  ¿Tenés una imagen del estilo que buscás? Subila y el profesional la ve antes del turno.
+                  {businessData.referencePhotoHint || '¿Tenés una imagen del estilo que buscás? Subila y el profesional la ve antes del turno.'}
                 </p>
 
                 {refPhoto ? (
@@ -971,6 +985,8 @@ export default function Landing() {
       )}
 
       <Footer business={businessData} />
+
+      {portfolioPro && <PortfolioModal professional={portfolioPro} onClose={() => setPortfolioPro(null)} />}
 
       {placeTab && (
         <PlaceModal

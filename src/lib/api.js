@@ -83,6 +83,8 @@ export async function fetchBusinessData(slug) {
     socials: biz.socials || [],
     platform: { name: biz.platform_name, url: biz.platform_url },
     features: { referencePhoto: biz.feature_reference_photo },
+    referencePhotoLabel: biz.reference_photo_label || '',
+    referencePhotoHint: biz.reference_photo_hint || '',
     reminders: {
       r1: { enabled: !!biz.reminder1_enabled, minutes: biz.reminder1_minutes },
       r2: { enabled: !!biz.reminder2_enabled, minutes: biz.reminder2_minutes }
@@ -206,6 +208,15 @@ export async function blockSlotReal(professionalId, date, time) {
   return { error };
 }
 
+export async function unblockAllSlotsReal(professionalId, fromDate) {
+  const { error } = await supabase
+    .from('blocked_slots')
+    .delete()
+    .eq('professional_id', professionalId)
+    .gte('date', fromDate);
+  return { error };
+}
+
 export async function unblockSlotReal(professionalId, date, time) {
   const { error } = await supabase
     .from('blocked_slots')
@@ -285,9 +296,11 @@ export async function fetchServicesCatalog(businessId) {
   return { data: data || [], error };
 }
 
-export async function insertServiceReal(businessId, slug, label, price = null, showPrice = false) {
-  const { data, error } = await supabase
-    .from('services').insert({ business_id: businessId, slug, label, price, show_price: showPrice }).select().single();
+export async function insertServiceReal(businessId, slug, label, price = null, showPrice = false, createdByProfessional = null) {
+  const row = { business_id: businessId, slug, label, price, show_price: showPrice };
+  // Servicio creado por un profesional (no dueño): queda marcado como suyo
+  if (createdByProfessional) row.created_by_professional = createdByProfessional;
+  const { data, error } = await supabase.from('services').insert(row).select().single();
   return { data, error };
 }
 
@@ -307,6 +320,14 @@ export async function fetchProfessionalServiceIds(professionalId) {
   const { data, error } = await supabase
     .from('professional_services').select('service_id, price').eq('professional_id', professionalId);
   return { data: (data || []).map((r) => ({ id: r.service_id, price: r.price })), error };
+}
+
+/** Vincula un servicio (propio) con el profesional, sin tocar los demás vínculos */
+export async function linkProfessionalService(professionalId, serviceId) {
+  const { error } = await supabase
+    .from('professional_services')
+    .upsert({ professional_id: professionalId, service_id: serviceId, price: null }, { onConflict: 'professional_id,service_id' });
+  return { error };
 }
 
 /** items: [{ id: service_id, price: número o null (usa el precio del catálogo) }] */
@@ -518,4 +539,41 @@ export async function cancelBookingByCode(businessId, code) {
 export async function fetchSubscribersOverview() {
   const { data, error } = await supabase.rpc('get_subscribers_overview');
   return { data: data || [], error };
+}
+
+// Dar o quitar el acceso sin pagar a un negocio (solo el dueño de la plataforma; lo valida la base).
+export async function setBusinessBillingExempt(businessId, exempt) {
+  const { error } = await supabase.rpc('admin_set_billing_exempt', { p_business_id: businessId, p_exempt: exempt });
+  return { error };
+}
+
+// Borrar una cuenta completa (solo el dueño de la plataforma; lo valida la función del servidor).
+async function callDeleteAccount(body) {
+  const { data, error } = await supabase.functions.invoke('admin-delete-account', { body });
+  let detail = data?.error || null;
+  if (error && !detail && error.context && typeof error.context.json === 'function') {
+    try { const b = await error.context.json(); detail = b?.error || b?.message || null; } catch { /* sin cuerpo */ }
+  }
+  if (detail || error) return { data: null, error: new Error(detail || 'No se pudo completar. Probá de nuevo.') };
+  return { data, error: null };
+}
+export const deleteBusinessAccount = (businessId) => callDeleteAccount({ action: 'delete_business', business_id: businessId });
+export const listOrphanUsers = () => callDeleteAccount({ action: 'list_orphan_users' });
+export const deleteOrphanUser = (userId) => callDeleteAccount({ action: 'delete_user', user_id: userId });
+
+// ============ PRECIO DEL PLAN ============
+// Lo que se muestra en el inicio y en el panel sale de la base, así el dueño de la plataforma lo cambia sin tocar código.
+export async function fetchPublicPlan() {
+  try {
+    const { data, error } = await supabase.rpc('get_public_plan');
+    if (error || !data) return {};
+    return data;
+  } catch {
+    return {};
+  }
+}
+
+export async function updatePlanPrice(price, label, trialDays = null) {
+  const { error } = await supabase.rpc('admin_update_plan', { p_price: price, p_label: label || '', p_trial_days: trialDays });
+  return { error };
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { business } from '../../config/business';
+import { usePanelAuth } from '../PanelAuthContext';
+import { useBusinessCatalog } from '../useBusinessCatalog';
 import { fetchBookings, updateBookingStatus } from '../../lib/api';
 import { downloadCsv } from '../../utils/csvExport';
 import { IconSearch, IconCheck, IconX, IconCamera } from '../../components/Icons';
@@ -24,16 +25,28 @@ function displayStatus(b) {
 }
 const LOYALTY_THRESHOLD = 3;
 
-function serviceLabels(ids) {
-  return ids.map((id) => business.services.find((s) => s.id === id)?.label || id).join(' · ');
+// Filtros rápidos que se pueden combinar (cada uno se prende y se apaga tocándolo)
+const QUICK_FILTERS = [
+  { id: 'frequent', label: '★ Clientes frecuentes' },
+  { id: 'photo', label: 'Con foto de referencia' },
+  { id: 'new', label: 'Clientes nuevos' },
+  { id: 'noshow', label: 'Con ausencias' },
+];
+
+function serviceLabels(services, ids) {
+  return ids.map((id) => services.find((s) => s.id === id)?.label || id).join(' · ');
 }
 
 export default function Turnos() {
+  const { session } = usePanelAuth();
+  const { services: catalogServices } = useBusinessCatalog(session.businessId);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [proFilter, setProFilter] = useState('all');
+  const [quick, setQuick] = useState([]);
+  const [sortBy, setSortBy] = useState('recent');
   const [cancelTarget, setCancelTarget] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
 
@@ -73,19 +86,44 @@ export default function Turnos() {
     return map;
   }, [bookings]);
 
+  const noshowsByPhone = useMemo(() => {
+    const map = {};
+    bookings.forEach((b) => {
+      if (b.status !== 'noshow') return;
+      map[b.client_phone] = (map[b.client_phone] || 0) + 1;
+    });
+    return map;
+  }, [bookings]);
+
+  const toggleQuick = (id) => setQuick((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const matchesQuick = (b) => quick.every((id) => {
+      const v = visitsByPhone[b.client_phone] || 0;
+      if (id === 'frequent') return v >= LOYALTY_THRESHOLD;
+      if (id === 'photo') return !!b.reference_photo_url;
+      if (id === 'new') return v <= 1;
+      if (id === 'noshow') return (noshowsByPhone[b.client_phone] || 0) > 0;
+      return true;
+    });
+    const visits = (b) => visitsByPhone[b.client_phone] || 0;
     return bookings
       .filter((b) => statusFilter === 'all' || b.status === statusFilter)
       .filter((b) => proFilter === 'all' || b.professional_id === proFilter)
       .filter((b) => !q || b.client_name.toLowerCase().includes(q) || b.client_phone.includes(q))
-      .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
-  }, [bookings, query, statusFilter, proFilter]);
+      .filter(matchesQuick)
+      .sort((a, b) => {
+        if (sortBy === 'most') return visits(b) - visits(a) || (b.date + b.time).localeCompare(a.date + a.time);
+        if (sortBy === 'least') return visits(a) - visits(b) || (b.date + b.time).localeCompare(a.date + a.time);
+        return (b.date + b.time).localeCompare(a.date + a.time);
+      });
+  }, [bookings, query, statusFilter, proFilter, quick, sortBy, visitsByPhone, noshowsByPhone]);
 
   const handleExport = () => {
     const rows = filtered.map((b) => ({
       fecha: b.date, hora: b.time, cliente: b.client_name, telefono: b.client_phone,
-      servicios: serviceLabels(b.services), profesional: b.professionals?.name || '', estado: STATUS_LABEL[b.status]
+      servicios: serviceLabels(catalogServices, b.services), profesional: b.professionals?.name || '', estado: STATUS_LABEL[b.status]
     }));
     downloadCsv('turnos.csv', rows, [
       { key: 'fecha', label: 'Fecha' }, { key: 'hora', label: 'Hora' },
@@ -115,11 +153,33 @@ export default function Turnos() {
           <option value="cancelled">Cancelado</option>
         </select>
 
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="recent">Más recientes primero</option>
+          <option value="most">Más visitas primero</option>
+          <option value="least">Menos visitas primero</option>
+        </select>
+
         {professionalOptions.length > 1 && (
           <select value={proFilter} onChange={(e) => setProFilter(e.target.value)}>
             <option value="all">Todos los profesionales</option>
             {professionalOptions.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
+        )}
+      </div>
+
+      <div className="tn-chips">
+        {QUICK_FILTERS.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            className={`tn-chip ${quick.includes(f.id) ? 'on' : ''}`}
+            onClick={() => toggleQuick(f.id)}
+          >
+            {f.label}
+          </button>
+        ))}
+        {quick.length > 0 && (
+          <button type="button" className="tn-chip-clear" onClick={() => setQuick([])}>Limpiar</button>
         )}
       </div>
 
@@ -148,7 +208,7 @@ export default function Turnos() {
                         {isFrequent && <span className="tn-loyal">★ Cliente frecuente</span>}
                         {b.professionals?.name && <span className="tn-pro-badge">{b.professionals.name}</span>}
                       </div>
-                      <p className="tn-services">{serviceLabels(b.services)}</p>
+                      <p className="tn-services">{serviceLabels(catalogServices, b.services)}</p>
                       {b.reference_photo_url && (
                         <button
                           type="button"

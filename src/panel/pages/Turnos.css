@@ -170,3 +170,11 @@
   border: 2px solid var(--neon-ink, #0a0a0a);
 }
 .tn-photo-close:hover { transform: scale(1.08); }
+
+.tn-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.tn-chip {
+  padding: 7px 14px; border-radius: 999px; cursor: pointer; font-size: 0.78rem; font-weight: 600;
+  background: var(--panel); color: var(--gray); border: 1px solid var(--border);
+}
+.tn-chip.on { background: var(--neon); color: var(--neon-ink, #0a0a0a); border-color: var(--neon); }
+.tn-chip-clear { background: none; border: 0; color: var(--gray); font-size: 0.78rem; text-decoration: underline; cursor: pointer; }

@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
+import { normalizeImage, looksLikeImage } from '../../utils/normalizeImage';
 import { usePanelAuth } from '../PanelAuthContext';
+import { supabase } from '../../lib/supabaseClient';
 import { fetchOwnProfessional, updateProfessional, uploadImage, deleteImage, fileExt } from '../../lib/api';
 import { IconCamera, IconX, SocialIcon } from '../../components/Icons';
+import ImageCropper from '../../components/ImageCropper';
+import PhotoStrip from '../../components/PhotoStrip';
+import { storageObjectExists } from '../../utils/storageExists';
+import { shrinkImage } from '../../utils/shrinkImage';
 import './MiPerfil.css';
+
+const MAX_PORTFOLIO = 24;
+const MAX_WORKSPACE = 8;
 
 const SOCIAL_TYPES = [
   { value: 'instagram', label: 'Instagram' },
@@ -55,7 +64,15 @@ export default function MiPerfil() {
         setWorkspacePhotos((data.workspace_photos || []).map((p) => ({ ...p })));
         setPortfolioPhotos((data.portfolio_photos || []).map((p) => ({ ...p })));
         setNotifyEmail(data.notify_email !== false);
-        setNotifyEmailAddress(data.notify_email_address || '');
+        // Si todavía no cargó un correo para los avisos, le sugerimos el de su cuenta (puede cambiarlo)
+        let addr = data.notify_email_address || '';
+        if (!addr) {
+          try {
+            const { data: u } = await supabase.auth.getUser();
+            addr = u?.user?.email || '';
+          } catch { /* sin sugerencia */ }
+        }
+        setNotifyEmailAddress(addr);
       }
       setLoading(false);
     })();
@@ -63,19 +80,55 @@ export default function MiPerfil() {
 
   const touch = () => setSaved(false);
 
-  const handlePhotoChange = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  const [cropSource, setCropSource] = useState(null);
+  const [pendingOriginal, setPendingOriginal] = useState(null);
+  const [limitMsg, setLimitMsg] = useState('');
+  const [cropHint, setCropHint] = useState('');
 
+  const handlePhotoChange = async (e) => {
+    const picked = e.target.files?.[0];
+    e.target.value = '';
+    if (!picked) return;
     setUploadingPhoto(true);
-    const path = `professionals/${session.professionalId}/photo.${fileExt(file)}`;
+    const file = await normalizeImage(picked);
+    setUploadingPhoto(false);
+    setPendingOriginal(file);
+    setCropSource(file);
+  };
+
+  const originalPath = `professionals/${session.professionalId}/original.jpg`;
+
+  // Para "Ajustar encuadre": si guardamos la foto original, se vuelve a encuadrar desde ella
+  // (así se puede subir o bajar el recorte de verdad). Si no existe, se usa la foto actual.
+  const openAdjust = async () => {
+    setPendingOriginal(null);
+    if (await storageObjectExists(originalPath)) {
+      const { data } = supabase.storage.from('public-images').getPublicUrl(originalPath);
+      setCropHint('');
+      setCropSource(`${data.publicUrl}?t=${Date.now()}`);
+      return;
+    }
+    setCropHint('Esta foto se subió antes de que guardáramos el original: podés moverla y acercarla. Para elegir otra parte de la foto completa, subí la original una vez (con "Cambiar foto") y después vas a poder reencuadrar libremente.');
+    setCropSource(photo.split('?')[0]);
+  };
+
+  const handleCropped = async (blob) => {
+    setCropSource(null);
+    const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+    setUploadingPhoto(true);
+    if (pendingOriginal) {
+      const small = await shrinkImage(pendingOriginal);
+      if (small) await uploadImage(originalPath, new File([small], 'original.jpg', { type: 'image/jpeg' }));
+      setPendingOriginal(null);
+    }
+    // Nombre nuevo en cada guardado: así el inicio nunca muestra una versión vieja guardada en caché
+    const path = `professionals/${session.professionalId}/photo-${Date.now()}.jpg`;
     const { url, error } = await uploadImage(path, file);
     setUploadingPhoto(false);
 
     if (!error && url) {
       touch();
-      setPhoto(`${url}?t=${Date.now()}`);
+      setPhoto(url);
       await updateProfessional(session.professionalId, { photo_url: url });
     }
   };
@@ -95,20 +148,32 @@ export default function MiPerfil() {
   };
   const removeSocial = (i) => { touch(); setSocials((prev) => prev.filter((_, idx) => idx !== i)); };
 
-  const addWorkspacePhoto = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  // Sube varias fotos juntas (selección múltiple en el celular o arrastrando varias en la compu)
+  const uploadMany = async (fileList, kind) => {
+    const isWork = kind === 'workspace';
+    const current = isWork ? workspacePhotos : portfolioPhotos;
+    const max = isWork ? MAX_WORKSPACE : MAX_PORTFOLIO;
+    const setList = isWork ? setWorkspacePhotos : setPortfolioPhotos;
+    const setBusy = isWork ? setUploadingWorkspace : setUploadingPortfolio;
+    const files = await Promise.all(Array.from(fileList || []).filter(looksLikeImage).map(normalizeImage));
+    if (files.length === 0) return;
 
-    setUploadingWorkspace(true);
-    const path = `workspace/${session.professionalId}/${Date.now()}.${fileExt(file)}`;
-    const { url, error } = await uploadImage(path, file);
-    setUploadingWorkspace(false);
+    const room = max - current.length;
+    if (room <= 0) { setLimitMsg(`Llegaste al máximo de ${max} fotos en esta sección. Eliminá alguna para agregar otra.`); return; }
+    const batch = files.slice(0, room);
+    setLimitMsg(files.length > room ? `Solo entraban ${room} foto${room === 1 ? '' : 's'} más (máximo ${max}). Subimos las primeras ${room}.` : '');
 
-    if (!error && url) {
-      touch();
-      setWorkspacePhotos((prev) => [...prev, { src: url, caption: '', path }]);
+    setBusy(true);
+    for (let i = 0; i < batch.length; i += 1) {
+      const small = await shrinkImage(batch[i]);
+      const path = `${kind}/${session.professionalId}/${Date.now()}-${i}.jpg`;
+      const { url, error } = await uploadImage(path, small ? new File([small], 'foto.jpg', { type: 'image/jpeg' }) : batch[i]);
+      if (!error && url) {
+        touch();
+        setList((prev) => [...prev, { src: url, caption: '', path }]);
+      }
     }
+    setBusy(false);
   };
   const updateWorkspaceCaption = (i, value) => {
     touch();
@@ -121,21 +186,6 @@ export default function MiPerfil() {
     if (removed?.path) await deleteImage(removed.path);
   };
 
-  const addPortfolioPhoto = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-
-    setUploadingPortfolio(true);
-    const path = `portfolio/${session.professionalId}/${Date.now()}.${fileExt(file)}`;
-    const { url, error } = await uploadImage(path, file);
-    setUploadingPortfolio(false);
-
-    if (!error && url) {
-      touch();
-      setPortfolioPhotos((prev) => [...prev, { src: url, caption: '', path }]);
-    }
-  };
   const updatePortfolioCaption = (i, value) => {
     touch();
     setPortfolioPhotos((prev) => prev.map((p, idx) => (idx === i ? { ...p, caption: value } : p)));
@@ -169,19 +219,46 @@ export default function MiPerfil() {
 
   return (
     <div className="mp">
+      {cropSource && (
+        <ImageCropper
+          source={cropSource}
+          shape="circle"
+          aspect={1}
+          outputWidth={800}
+          mime="image/jpeg"
+          title="Encuadrar tu foto"
+          hint={cropHint || 'Arrastrá la foto para elegir qué parte se ve en el círculo. Si es vertical, subila o bajala. Usá el control para acercar. La foto original no se toca: podés reencuadrar cuando quieras.'}
+          onCancel={() => setCropSource(null)}
+          onConfirm={handleCropped}
+        />
+      )}
       <div className="mp-head">
         <h1>Mi perfil</h1>
         <p className="mp-sub">Esto es lo que ven tus clientes al elegirte</p>
       </div>
 
       <div className="mp-top">
-        <label className="mp-avatar-wrap">
-          <div className="mp-avatar">
-            {photo ? <img src={photo} alt={name} /> : <span>{name.charAt(0) || '?'}</span>}
+        <div className="mp-photo-col">
+          <label className="mp-avatar-wrap">
+            <div className="mp-avatar">
+              {photo ? <img src={photo} alt={name} /> : <span>{name.charAt(0) || '?'}</span>}
+            </div>
+            <span className="mp-avatar-edit">{uploadingPhoto ? '...' : <IconCamera size={14} />}</span>
+            <input type="file" accept="image/*" onChange={handlePhotoChange} hidden disabled={uploadingPhoto} />
+          </label>
+          <div className="mp-photo-actions">
+            <label className="mp-pill">
+              <input type="file" accept="image/*" onChange={handlePhotoChange} hidden disabled={uploadingPhoto} />
+              {uploadingPhoto ? 'Subiendo...' : photo ? 'Cambiar foto' : 'Subir foto'}
+            </label>
+            {photo && (
+              <button type="button" className="mp-pill" onClick={openAdjust} disabled={uploadingPhoto}>
+                Ajustar encuadre
+              </button>
+            )}
           </div>
-          <span className="mp-avatar-edit">{uploadingPhoto ? '...' : <IconCamera size={14} />}</span>
-          <input type="file" accept="image/*" onChange={handlePhotoChange} hidden disabled={uploadingPhoto} />
-        </label>
+          <p className="mp-photo-note">Así se ve en el inicio. Tu foto original se guarda entera.</p>
+        </div>
 
         <div className="mp-top-fields">
           <div className="mp-field">
@@ -195,6 +272,7 @@ export default function MiPerfil() {
         </div>
       </div>
 
+      {limitMsg && <p className="mp-limit-msg">{limitMsg}</p>}
       <div className="mp-columns">
         <div className="mp-card">
           <div className="mp-section-head">
@@ -225,25 +303,14 @@ export default function MiPerfil() {
           </div>
           <p className="mp-hint">Se muestran cuando un cliente elige verte en "Ver el local"</p>
 
-          <div className="mp-photos-grid">
-            {workspacePhotos.map((p, i) => (
-              <div key={i} className="mp-photo-card">
-                <div className="mp-photo-card-img">
-                  <img src={p.src} alt={p.caption || `Foto ${i + 1}`} />
-                  <button type="button" className="mp-photo-remove" onClick={() => removeWorkspacePhoto(i)} aria-label="Quitar foto">
-                    <IconX size={13} />
-                  </button>
-                </div>
-                <input type="text" placeholder="Descripción" value={p.caption} onChange={(e) => updateWorkspaceCaption(i, e.target.value)} />
-              </div>
-            ))}
-
-            <label className="mp-photo-add">
-              <input type="file" accept="image/*" onChange={addWorkspacePhoto} hidden disabled={uploadingWorkspace} />
-              <IconCamera size={20} />
-              <span>{uploadingWorkspace ? 'Subiendo...' : 'Agregar foto'}</span>
-            </label>
-          </div>
+          <PhotoStrip
+            photos={workspacePhotos}
+            max={MAX_WORKSPACE}
+            uploading={uploadingWorkspace}
+            onAdd={(files) => uploadMany(files, 'workspace')}
+            onRemove={removeWorkspacePhoto}
+            onCaption={updateWorkspaceCaption}
+          />
         </div>
 
         <div className="mp-card">
@@ -252,25 +319,14 @@ export default function MiPerfil() {
           </div>
           <p className="mp-hint">Fotos de cortes/trabajos que hiciste. El cliente las ve tocando "Ver trabajos" en tu tarjeta.</p>
 
-          <div className="mp-photos-grid">
-            {portfolioPhotos.map((p, i) => (
-              <div key={i} className="mp-photo-card">
-                <div className="mp-photo-card-img">
-                  <img src={p.src} alt={p.caption || `Trabajo ${i + 1}`} />
-                  <button type="button" className="mp-photo-remove" onClick={() => removePortfolioPhoto(i)} aria-label="Quitar foto">
-                    <IconX size={13} />
-                  </button>
-                </div>
-                <input type="text" placeholder="Descripción" value={p.caption} onChange={(e) => updatePortfolioCaption(i, e.target.value)} />
-              </div>
-            ))}
-
-            <label className="mp-photo-add">
-              <input type="file" accept="image/*" onChange={addPortfolioPhoto} hidden disabled={uploadingPortfolio} />
-              <IconCamera size={20} />
-              <span>{uploadingPortfolio ? 'Subiendo...' : 'Agregar foto'}</span>
-            </label>
-          </div>
+          <PhotoStrip
+            photos={portfolioPhotos}
+            max={MAX_PORTFOLIO}
+            uploading={uploadingPortfolio}
+            onAdd={(files) => uploadMany(files, 'portfolio')}
+            onRemove={removePortfolioPhoto}
+            onCaption={updatePortfolioCaption}
+          />
 
           <div className="mp-notify">
             <label className="mp-toggle-row">

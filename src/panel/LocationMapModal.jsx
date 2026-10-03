@@ -31,7 +31,7 @@ function getBrowserLocation(highAccuracy = false, timeout = 6000) {
 /**
  * Modal con mapa interactivo (arrastrar/zoom, pin fijo en el centro) y vista de calle al lado
  * para confirmar visualmente el local. Usa OpenStreetMap/Esri con Leaflet: no necesita API key
- * ni tarjeta de crédito. Abre en modo satélite.
+ * ni tarjeta de crédito. Abre en mapa de calles.
  *
  * Props:
  *  - open: boolean
@@ -57,7 +57,8 @@ export default function LocationMapModal({ open, initialLat, initialLng, initial
   const [errorMsg, setErrorMsg] = useState('');
   const [center, setCenter] = useState(centerRef.current);
   const [svPoint, setSvPoint] = useState(centerRef.current);
-  const [satellite, setSatellite] = useState(true);
+  const [satellite, setSatellite] = useState(false);
+  const [svKey, setSvKey] = useState(0);
   const [locating, setLocating] = useState(false);
   const [locateMsg, setLocateMsg] = useState('');
 
@@ -85,7 +86,7 @@ export default function LocationMapModal({ open, initialLat, initialLng, initial
     userMovedRef.current = false;
     setStatus('loading');
     setLocateMsg('');
-    setSatellite(true);
+    setSatellite(false); // abre en mapa de calles: es nítido hasta el zoom máximo
 
     (async () => {
       try {
@@ -111,7 +112,7 @@ export default function LocationMapModal({ open, initialLat, initialLng, initial
         const tileOpts = { updateWhenIdle: false, updateWhenZooming: false, keepBuffer: 4, maxZoom: 20 };
         const sat = L.tileLayer(SAT_URL, { ...tileOpts, maxNativeZoom: SAT_NATIVE_MAX, attribution: SAT_ATTR });
         const street = L.tileLayer(OSM_URL, { ...tileOpts, maxNativeZoom: 19, attribution: OSM_ATTR });
-        sat.addTo(map); // abre en satélite
+        street.addTo(map); // abre en calles (nítido); el satélite se activa con el botón
         layersRef.current = { sat, street };
         mapRef.current = map;
 
@@ -180,8 +181,14 @@ export default function LocationMapModal({ open, initialLat, initialLng, initial
     const map = mapRef.current;
     const { sat, street } = layersRef.current;
     if (!map || !sat || !street) return;
-    if (satellite) { if (map.hasLayer(street)) map.removeLayer(street); if (!map.hasLayer(sat)) sat.addTo(map); }
-    else { if (map.hasLayer(sat)) map.removeLayer(sat); if (!map.hasLayer(street)) street.addTo(map); }
+    if (satellite) {
+      // El satélite solo es nítido hasta SAT_NATIVE_MAX: no dejamos acercar más para que nunca se vea borroso
+      map.setMaxZoom(SAT_NATIVE_MAX);
+      if (map.getZoom() > SAT_NATIVE_MAX) map.setZoom(SAT_NATIVE_MAX);
+      if (map.hasLayer(street)) map.removeLayer(street);
+      if (!map.hasLayer(sat)) sat.addTo(map);
+    } else {
+      map.setMaxZoom(20); if (map.hasLayer(sat)) map.removeLayer(sat); if (!map.hasLayer(street)) street.addTo(map); }
   }, [satellite, status]);
 
   async function handleLocate() {
@@ -257,11 +264,17 @@ export default function LocationMapModal({ open, initialLat, initialLng, initial
             <div className="lmm-sv-label">Vista de calle</div>
             <div className="lmm-sv">
               {status === 'ready' && svSrc && (
-                <iframe title="Vista de calle" src={svSrc} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
+                <iframe key={svKey} title="Vista de calle" src={svSrc} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
               )}
             </div>
+            <p className="lmm-sv-note">
+              La vista de calle es solo de ayuda. Si no carga, podés confirmar igual con el mapa.
+            </p>
+            <button type="button" className="lmm-sv-link" style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', textAlign: 'left' }} onClick={() => setSvKey((k) => k + 1)}>
+              Recargar vista de calle
+            </button>
             <a className="lmm-sv-link" href={svLink} target="_blank" rel="noreferrer">
-              Si no se ve, abrir vista de calle en Google
+              Abrir vista de calle en Google
             </a>
           </div>
         </div>

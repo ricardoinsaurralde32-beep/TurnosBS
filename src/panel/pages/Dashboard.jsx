@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { usePanelAuth } from '../PanelAuthContext';
-import { business } from '../../config/business';
+import { useBusinessCatalog } from '../useBusinessCatalog';
 import { fetchBookings, fetchServicesCatalog } from '../../lib/api';
 import { getSocialClicks } from '../../utils/socialClicks';
 import './Dashboard.css';
@@ -37,13 +37,43 @@ function rangeBounds(range) {
   return [toISO(RANGES[range].from(now)), toISO(RANGES[range].to(now))];
 }
 
-function serviceLabel(id) {
-  return business.services.find((s) => s.id === id)?.label || id;
+function ShareLinkCard({ slug }) {
+  const [copied, setCopied] = useState(false);
+  if (!slug) return null;
+  const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/${slug}`;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const t = document.createElement('textarea');
+      t.value = url; document.body.appendChild(t); t.select();
+      try { document.execCommand('copy'); } catch { /* sin portapapeles */ }
+      document.body.removeChild(t);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2200);
+  };
+  return (
+    <div className="db-share">
+      <strong className="db-share-title">Tu link para que te reserven</strong>
+      <p className="db-share-text">
+        Compartí este link con tus clientes (por WhatsApp, Instagram o donde quieras). Lo abren, eligen día y hora, y el turno te llega acá solo. Sin llamadas ni mensajes de ida y vuelta.
+      </p>
+      <div className="db-share-row">
+        <span className="db-share-url">{url.replace(/^https?:\/\//, '')}</span>
+        <button type="button" className="db-share-btn" onClick={copy}>{copied ? 'Copiado ✓' : 'Copiar'}</button>
+      </div>
+      <p className="db-share-hint">También tenés el código QR para imprimir en la sección "Códigos QR".</p>
+    </div>
+  );
 }
 
 export default function Dashboard() {
   const { session } = usePanelAuth();
   const isOwner = session.role === 'owner';
+  const { business: biz, services: catalogServices, professionals: catalogPros } = useBusinessCatalog(session.businessId);
+  const businessName = biz?.name || '';
+  const serviceLabel = (id) => catalogServices.find((s) => s.id === id)?.label || id;
   const today = new Date();
   const todayISO = toISO(today);
 
@@ -135,19 +165,19 @@ export default function Dashboard() {
   const clickRows = useMemo(() => {
     const rows = [];
     if (isOwner) {
-      rows.push({ label: `Instagram · ${business.name}`, count: clicks.business?.instagram || 0 });
-      rows.push({ label: `WhatsApp · ${business.name}`, count: clicks.business?.whatsapp || 0 });
-      business.professionals.forEach((pro) => {
+      rows.push({ label: `Instagram · ${businessName}`, count: clicks.business?.instagram || 0 });
+      rows.push({ label: `WhatsApp · ${businessName}`, count: clicks.business?.whatsapp || 0 });
+      catalogPros.forEach((pro) => {
         rows.push({ label: `Instagram · ${pro.name}`, count: clicks[pro.slug]?.instagram || 0 });
         rows.push({ label: `WhatsApp · ${pro.name}`, count: clicks[pro.slug]?.whatsapp || 0 });
       });
     } else {
-      const proSlug = business.professionals.find((p) => p.name === session.name)?.slug;
+      const proSlug = catalogPros.find((p) => p.id === session.professionalId)?.slug;
       rows.push({ label: 'Instagram', count: clicks[proSlug]?.instagram || 0 });
       rows.push({ label: 'WhatsApp', count: clicks[proSlug]?.whatsapp || 0 });
     }
     return rows.sort((a, b) => b.count - a.count);
-  }, [clicks, isOwner, session]);
+  }, [clicks, isOwner, session, businessName, catalogPros]);
   const maxClickCount = Math.max(1, ...clickRows.map((r) => r.count));
   const hasClicks = clickRows.some((r) => r.count > 0);
 
@@ -164,8 +194,10 @@ export default function Dashboard() {
     <div className="db">
       <div className="db-head">
         <h1>{greeting}, {session.name}</h1>
-        <p className="db-sub">Así viene {business.name}</p>
+        <p className="db-sub">Así viene {businessName || 'tu negocio'}</p>
       </div>
+
+      <ShareLinkCard slug={biz?.slug} />
 
       <div className="db-range">
         {Object.entries(RANGES).map(([key, r]) => (

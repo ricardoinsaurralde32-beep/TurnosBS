@@ -1,4 +1,10 @@
 import { useState, useEffect } from 'react';
+import { normalizeImage } from '../../utils/normalizeImage';
+import { hoursSummary } from '../../utils/hoursSummary';
+import ImageCropper from '../../components/ImageCropper';
+import { supabase } from '../../lib/supabaseClient';
+import { storageObjectExists } from '../../utils/storageExists';
+import { shrinkImage } from '../../utils/shrinkImage';
 import { usePanelAuth } from '../PanelAuthContext';
 import { fetchBusinessById, updateBusinessReal, uploadImage, deleteImage, fileExt } from '../../lib/api';
 import { formatLead } from '../../utils/reminders';
@@ -72,6 +78,17 @@ function ReminderRow({ title, on, onToggle, val, unit, onVal, onUnit }) {
   );
 }
 
+const draftKey = (id) => `dn-draft-${id}`;
+function readDraft(id) {
+  try { const raw = localStorage.getItem(draftKey(id)); return raw ? JSON.parse(raw) : null; } catch { return null; }
+}
+function writeDraft(id, data) {
+  try { localStorage.setItem(draftKey(id), JSON.stringify(data)); } catch { /* sin almacenamiento: no pasa nada */ }
+}
+function clearDraft(id) {
+  try { localStorage.removeItem(draftKey(id)); } catch { /* idem */ }
+}
+
 export default function DatosNegocio() {
   const { session, refreshBusinessTheme } = usePanelAuth();
   const [loading, setLoading] = useState(true);
@@ -84,6 +101,10 @@ export default function DatosNegocio() {
   const [lng, setLng] = useState(null);
   const [showMapModal, setShowMapModal] = useState(false);
   const [policyNotice, setPolicyNotice] = useState('');
+  const [refEnabled, setRefEnabled] = useState(true);
+  const [refLabel, setRefLabel] = useState('');
+  const [refHint, setRefHint] = useState('');
+  const [hoursCustom, setHoursCustom] = useState('');
   const [minHoursAhead, setMinHoursAhead] = useState(8);
   const [slotMinutes, setSlotMinutes] = useState(40);
   const [customMode, setCustomMode] = useState(false);
@@ -93,14 +114,15 @@ export default function DatosNegocio() {
   const [themeMode, setThemeMode] = useState('dark');
   const [placePhotos, setPlacePhotos] = useState([]);
 
-  const [r1On, setR1On] = useState(true);
-  const [r1Val, setR1Val] = useState('2');
-  const [r1Unit, setR1Unit] = useState('h');
+  // Un solo recordatorio por correo (por defecto 30 min antes). Usa el "slot 2" de la base;
+  // el slot 1 queda siempre apagado para no duplicar avisos ni gastar el servicio de mail.
   const [r2On, setR2On] = useState(true);
   const [r2Val, setR2Val] = useState('30');
   const [r2Unit, setR2Unit] = useState('m');
   const [remindersToPro, setRemindersToPro] = useState(true);
   const [saveError, setSaveError] = useState('');
+  const [draftReady, setDraftReady] = useState(false);
+  const [recovered, setRecovered] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -120,6 +142,10 @@ export default function DatosNegocio() {
         setLat(data.lat ?? null);
         setLng(data.lng ?? null);
         setPolicyNotice(data.policy_notice || '');
+        setRefEnabled(data.feature_reference_photo !== false);
+        setRefLabel(data.reference_photo_label || '');
+        setRefHint(data.reference_photo_hint || '');
+        setHoursCustom((data.hours_text || []).join('\n'));
         setMinHoursAhead(data.min_hours_ahead ?? 8);
         setSlotMinutes(data.slot_minutes ?? 40);
         setCustomMode(!PRESET_MINUTES.includes(data.slot_minutes));
@@ -129,19 +155,53 @@ export default function DatosNegocio() {
         setThemeMode(data.theme_mode || 'dark');
         setPlacePhotos((data.place_photos || []).map((p) => ({ ...p })));
 
-        const a = splitMinutes(data.reminder1_minutes ?? 120);
-        setR1On(data.reminder1_enabled ?? true);
-        setR1Val(a.val);
-        setR1Unit(a.unit);
         const b = splitMinutes(data.reminder2_minutes ?? 30);
         setR2On(data.reminder2_enabled ?? true);
         setR2Val(b.val);
         setR2Unit(b.unit);
         setRemindersToPro(data.reminders_to_pro ?? true);
+
+        // Si había cambios sin guardar (se refrescó o se cerró la página), los recuperamos
+        const draft = readDraft(session.businessId);
+        if (draft) {
+          if ('name' in draft) setName(draft.name);
+          if ('tagline' in draft) setTagline(draft.tagline);
+          if ('address' in draft) setAddress(draft.address);
+          if ('addressDetail' in draft) setAddressDetail(draft.addressDetail);
+          if ('lat' in draft) setLat(draft.lat);
+          if ('lng' in draft) setLng(draft.lng);
+          if ('policyNotice' in draft) setPolicyNotice(draft.policyNotice);
+          if ('minHoursAhead' in draft) setMinHoursAhead(draft.minHoursAhead);
+          if ('slotMinutes' in draft) setSlotMinutes(draft.slotMinutes);
+          if ('customMode' in draft) setCustomMode(draft.customMode);
+          if (draft.schedule) setSchedule(draft.schedule);
+          if ('colorScheme' in draft) setColorScheme(draft.colorScheme);
+          if (draft.customColors) setCustomColors(draft.customColors);
+          if ('themeMode' in draft) setThemeMode(draft.themeMode);
+          if ('r2On' in draft) setR2On(draft.r2On);
+          if ('r2Val' in draft) setR2Val(draft.r2Val);
+          if ('r2Unit' in draft) setR2Unit(draft.r2Unit);
+          if ('remindersToPro' in draft) setRemindersToPro(draft.remindersToPro);
+          setRecovered(true);
+        }
       }
       setLoading(false);
+      setDraftReady(true);
     })();
   }, [session.businessId]);
+
+  // Guardado automático del borrador (solo en este navegador) mientras se edita
+  useEffect(() => {
+    if (!draftReady || loading) return;
+    const t = setTimeout(() => {
+      writeDraft(session.businessId, {
+        name, tagline, address, addressDetail, lat, lng, policyNotice, minHoursAhead, slotMinutes,
+        customMode, schedule, colorScheme, customColors, themeMode, r2On, r2Val, r2Unit, remindersToPro,
+      });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [draftReady, loading, session.businessId, name, tagline, address, addressDetail, lat, lng, policyNotice,
+      minHoursAhead, slotMinutes, customMode, schedule, colorScheme, customColors, themeMode, r2On, r2Val, r2Unit, remindersToPro]);
 
   const touch = () => { setSaved(false); setSaveError(''); };
 
@@ -178,29 +238,69 @@ export default function DatosNegocio() {
     }));
   };
 
-  const handleLogoChange = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  const [logoCrop, setLogoCrop] = useState(null);
+  const [pendingLogoOriginal, setPendingLogoOriginal] = useState(null);
+  const [needLogoOriginal, setNeedLogoOriginal] = useState(false);
 
+  const handleLogoChange = async (e) => {
+    const picked = e.target.files?.[0];
+    e.target.value = '';
+    if (!picked) return;
     setUploadingLogo(true);
-    const path = `logos/${session.businessId}/logo.${fileExt(file)}`;
+    const file = await normalizeImage(picked);
+    setUploadingLogo(false);
+    setNeedLogoOriginal(false);
+    setPendingLogoOriginal(file);
+    setLogoCrop(file);
+  };
+
+  const logoOriginalPath = `logos/${session.businessId}/original`;
+
+  // "Ajustar encuadre" vuelve a encuadrar desde la imagen original guardada (si existe)
+  const openLogoAdjust = async () => {
+    setPendingLogoOriginal(null);
+    if (await storageObjectExists(logoOriginalPath)) {
+      const { data } = supabase.storage.from('public-images').getPublicUrl(logoOriginalPath);
+      setLogoCrop(`${data.publicUrl}?t=${Date.now()}`);
+      return;
+    }
+    setNeedLogoOriginal(true);
+  };
+
+  const saveOriginalLogo = async (file) => {
+    let toSave = file;
+    if (file.size > 3 * 1024 * 1024) {
+      const small = await shrinkImage(file, 2000);
+      if (small) toSave = new File([small], 'original', { type: 'image/jpeg' });
+    }
+    await uploadImage(logoOriginalPath, toSave);
+  };
+
+  const uploadLogo = async (file, isOriginalFull = false) => {
+    setLogoCrop(null);
+    setUploadingLogo(true);
+    if (pendingLogoOriginal && !isOriginalFull) await saveOriginalLogo(pendingLogoOriginal);
+    if (pendingLogoOriginal && isOriginalFull) await saveOriginalLogo(pendingLogoOriginal);
+    setPendingLogoOriginal(null);
+    // Nombre nuevo en cada guardado: el inicio nunca muestra una versión vieja guardada en caché
+    const path = `logos/${session.businessId}/logo-${Date.now()}.${fileExt(file)}`;
     const { url, error } = await uploadImage(path, file);
     setUploadingLogo(false);
 
     if (!error && url) {
       touch();
-      setLogo(`${url}?t=${Date.now()}`);
+      setLogo(url);
       await updateBusinessReal(session.businessId, { logo_url: url });
     }
   };
 
   const addPlacePhoto = async (e) => {
-    const file = e.target.files?.[0];
+    const picked = e.target.files?.[0];
     e.target.value = '';
-    if (!file) return;
+    if (!picked) return;
 
     setUploadingPlace(true);
+    const file = await normalizeImage(picked);
     const path = `place/${session.businessId}/${Date.now()}.${fileExt(file)}`;
     const { url, error } = await uploadImage(path, file);
     setUploadingPlace(false);
@@ -224,24 +324,17 @@ export default function DatosNegocio() {
   };
 
   /* ---- Validación de recordatorios (se recalcula en cada render) ---- */
-  const m1 = toMinutes(r1Val, r1Unit);
   const m2 = toMinutes(r2Val, r2Unit);
   let reminderError = '';
-  if (!validLead(m1) || !validLead(m2)) {
-    reminderError = 'Cada recordatorio tiene que estar entre 15 minutos y 24 horas.';
-  } else if (m1 === m2) {
-    reminderError = 'Los dos recordatorios no pueden avisar con la misma anticipación.';
+  if (r2On && !validLead(m2)) {
+    reminderError = 'El recordatorio tiene que estar entre 15 minutos y 24 horas.';
   }
 
   let reminderSummary = '';
   if (!reminderError) {
-    const leads = [];
-    if (r1On) leads.push(m1);
-    if (r2On) leads.push(m2);
-    leads.sort((a, b) => b - a);
-    reminderSummary = leads.length === 0
+    reminderSummary = !r2On
       ? 'No se enviarán recordatorios a los clientes.'
-      : `Los clientes con correo recibirán el aviso ${leads.map(formatLead).join(' y ')} antes del turno.`;
+      : `Los clientes con correo recibirán un aviso ${formatLead(m2)} antes del turno.`;
   }
 
   const handleSave = async () => {
@@ -254,12 +347,16 @@ export default function DatosNegocio() {
     const locationFields = (lat != null && lng != null) ? { lat, lng, ...buildMapLinks(lat, lng) } : {};
     const { error } = await updateBusinessReal(session.businessId, {
       name, tagline, address, address_detail: addressDetail, policy_notice: policyNotice,
+      feature_reference_photo: refEnabled,
+      reference_photo_label: refLabel.trim() || null,
+      reference_photo_hint: refHint.trim() || null,
+      hours_text: hoursCustom.split('\n').map((l) => l.trim()).filter(Boolean),
       min_hours_ahead: minHoursAhead, slot_minutes: slotMinutes, schedule, place_photos: placePhotos,
       color_scheme: colorScheme,
       custom_colors: colorScheme === CUSTOM_SCHEME_ID ? customColors : null,
       theme_mode: themeMode,
-      reminder1_enabled: r1On, reminder1_minutes: m1,
-      reminder2_enabled: r2On, reminder2_minutes: m2,
+      reminder1_enabled: false,
+      reminder2_enabled: r2On, reminder2_minutes: validLead(m2) ? m2 : 30,
       reminders_to_pro: remindersToPro,
       ...locationFields
     });
@@ -268,6 +365,8 @@ export default function DatosNegocio() {
       setSaveError('No se pudieron guardar los cambios. Revisá los datos e intentá de nuevo.');
       return;
     }
+    clearDraft(session.businessId);
+    setRecovered(false);
     await refreshBusinessTheme();
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -281,14 +380,73 @@ export default function DatosNegocio() {
         <h1>Datos del negocio</h1>
         <p className="dn-sub">Esto se aplica a toda la barbería, no a un profesional en particular</p>
       </div>
+      {needLogoOriginal && (
+        <div className="icr-overlay" role="dialog" aria-modal="true" onClick={() => setNeedLogoOriginal(false)}>
+          <div className="icr-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="icr-head">
+              <h3>Subí tu logo completo</h3>
+              <button type="button" className="icr-close" onClick={() => setNeedLogoOriginal(false)} aria-label="Cerrar">×</button>
+            </div>
+            <p className="icr-hint">Este logo se subió antes de que guardáramos la imagen original, y lo que quedó ya está recortado. Elegí tu logo completo una sola vez y desde ahí vas a poder reencuadrarlo todas las veces que quieras, sin perder nada.</p>
+            <div className="icr-actions">
+              <button type="button" className="icr-cancel" onClick={() => setNeedLogoOriginal(false)}>Ahora no</button>
+              <label className="icr-ok" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                Elegir logo
+                <input type="file" accept="image/*" onChange={handleLogoChange} hidden />
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+      {logoCrop && (
+        <ImageCropper
+          source={logoCrop}
+          shape="wide"
+          aspect={2.5}
+          outputWidth={1000}
+          mime="image/png"
+          title="Encuadrar el logo"
+          hint="El logo se muestra ancho en tu inicio. Arrastrá en cualquier dirección para elegir qué parte se ve y acercá con el control. Tu imagen completa queda guardada: podés reencuadrar cuando quieras."
+          onSkip={typeof logoCrop === 'string' ? undefined : () => uploadLogo(logoCrop, true)}
+          onCancel={() => setLogoCrop(null)}
+          onConfirm={(blob) => uploadLogo(new File([blob], 'logo.png', { type: 'image/png' }))}
+        />
+      )}
+      {recovered && (
+        <p className="dn-hint" style={{ color: 'var(--neon)' }}>
+          Recuperamos tus cambios sin guardar. Tocá "Guardar cambios" para aplicarlos.
+        </p>
+      )}
 
       <div className="dn-section">
-        <div className="dn-logo-row">
-          <div className="dn-logo">{logo && <img src={logo} alt={name} />}</div>
-          <label className="dn-logo-btn">
-            <input type="file" accept="image/*" onChange={handleLogoChange} hidden disabled={uploadingLogo} />
-            <IconCamera size={16} /> {uploadingLogo ? 'Subiendo...' : 'Cambiar logo'}
-          </label>
+        <div className="dn-logo-card">
+          <h3 className="dn-logo-title">Logo del negocio</h3>
+          {logo ? (
+            <div className="dn-logo-previews">
+              <figure className="dn-lp-fig dn-lp-fig-m">
+                <div className="dn-lp"><img src={logo} alt="" /><i /></div>
+                <figcaption>Celular</figcaption>
+              </figure>
+              <figure className="dn-lp-fig dn-lp-fig-pc">
+                <div className="dn-lp"><img src={logo} alt="" /><i /></div>
+                <figcaption>Computadora</figcaption>
+              </figure>
+            </div>
+          ) : (
+            <p className="dn-hint">Todavía no subiste un logo.</p>
+          )}
+          <div className="dn-logo-actions">
+            <label className="dn-logo-btn">
+              <input type="file" accept="image/*" onChange={handleLogoChange} hidden disabled={uploadingLogo} />
+              <IconCamera size={16} /> {uploadingLogo ? 'Subiendo...' : logo ? 'Cambiar logo' : 'Subir logo'}
+            </label>
+            {logo && (
+              <button type="button" className="dn-logo-btn" onClick={openLogoAdjust} disabled={uploadingLogo}>
+                Ajustar encuadre
+              </button>
+            )}
+          </div>
+          <p className="dn-hint dn-logo-note">Funciona mejor un logo ancho (rectangular). Si subís uno cuadrado, podés encuadrar el centro para que llene bien el diseño. Tu imagen original se guarda entera: podés reencuadrar cuando quieras sin perder nada.</p>
         </div>
 
         <div className="dn-field">
@@ -354,23 +512,60 @@ export default function DatosNegocio() {
       </div>
 
       <div className="dn-section">
+        <h2>Textos de tu página</h2>
+        <p className="dn-hint">Personalizá lo que lee el cliente al reservar y en el pie de tu página.</p>
+
+        <label className="dn-check">
+          <input type="checkbox" checked={refEnabled} onChange={(e) => { touch(); setRefEnabled(e.target.checked); }} />
+          <span>Dejar que el cliente suba una imagen al reservar</span>
+        </label>
+        {refEnabled && (
+          <>
+            <div className="dn-field">
+              <label>Título del campo</label>
+              <input type="text" value={refLabel} maxLength={80} placeholder="Foto de referencia (opcional)"
+                     onChange={(e) => { touch(); setRefLabel(e.target.value); }} />
+            </div>
+            <div className="dn-field">
+              <label>Texto de ayuda</label>
+              <textarea rows="3" value={refHint} maxLength={240}
+                        placeholder="¿Tenés una imagen del estilo que buscás? Subila y el profesional la ve antes del turno."
+                        onChange={(e) => { touch(); setRefHint(e.target.value); }} />
+              <p className="dn-hint" style={{ marginTop: 6 }}>
+                Dejalo vacío y se usa el texto de siempre. Ejemplo para canchas o negocios que piden seña: "Subí el comprobante de la transferencia al alias cancha.goya".
+              </p>
+            </div>
+          </>
+        )}
+
+        <div className="dn-field">
+          <label>Horarios que se muestran abajo, en "Dónde estamos"</label>
+          <textarea rows="4" value={hoursCustom}
+                    placeholder={'Una línea por renglón. Ej:\nLunes a viernes · 09:00 a 21:00\nSábado · 09:00 a 13:00'}
+                    onChange={(e) => { touch(); setHoursCustom(e.target.value); }} />
+          <div className="dn-inline-actions">
+            <button type="button" className="dn-linkbtn" onClick={() => { touch(); setHoursCustom(hoursSummary(schedule).join('\n')); }}>
+              Completar con mi horario general
+            </button>
+            {hoursCustom && (
+              <button type="button" className="dn-linkbtn" onClick={() => { touch(); setHoursCustom(''); }}>Borrar</button>
+            )}
+          </div>
+          <p className="dn-hint" style={{ marginTop: 6 }}>
+            Si lo dejás vacío, se arma solo con tu horario general. La dirección se edita arriba, en "Ubicación".
+          </p>
+        </div>
+      </div>
+
+      <div className="dn-section">
         <h2>Recordatorios por correo</h2>
         <p className="dn-hint">
           Se mandan al correo que el cliente deja al reservar. Cada cliente puede darse de baja desde el mismo mail.
-          Si un cliente reserva con menos anticipación que el aviso, ese aviso no se envía.
+          Si un cliente reserva con menos anticipación que el aviso, ese aviso no se envía. Por defecto avisamos 30 minutos antes; podés poner el tiempo que quieras.
         </p>
 
         <ReminderRow
-          title="Primer recordatorio"
-          on={r1On}
-          onToggle={(v) => { touch(); setR1On(v); }}
-          val={r1Val}
-          unit={r1Unit}
-          onVal={(v) => { touch(); setR1Val(v); }}
-          onUnit={(v) => { touch(); setR1Unit(v); }}
-        />
-        <ReminderRow
-          title="Segundo recordatorio"
+          title="Recordatorio al cliente"
           on={r2On}
           onToggle={(v) => { touch(); setR2On(v); }}
           val={r2Val}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePanelAuth } from '../PanelAuthContext';
-import { business } from '../../config/business';
+import { useBusinessCatalog } from '../useBusinessCatalog';
 import { fetchBookings, updateBookingStatus } from '../../lib/api';
 import { IconCheck, IconX, IconCamera } from '../../components/Icons';
 import CancelBookingModal from '../CancelBookingModal';
@@ -10,12 +10,13 @@ function todayISO() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
-function serviceLabels(ids) {
-  return ids.map((id) => business.services.find((s) => s.id === id)?.label || id).join(' · ');
+function serviceLabels(services, ids) {
+  return ids.map((id) => services.find((s) => s.id === id)?.label || id).join(' · ');
 }
 
 export default function AgendaHoy() {
   const { session } = usePanelAuth();
+  const { services: catalogServices } = useBusinessCatalog(session.businessId);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelTarget, setCancelTarget] = useState(null);
@@ -68,7 +69,7 @@ export default function AgendaHoy() {
                     <span className="ah-pro-badge">{b.professionals.name}</span>
                   )}
                 </p>
-                <p className="ah-services">{serviceLabels(b.services)}</p>
+                <p className="ah-services">{serviceLabels(catalogServices, b.services)}</p>
                 {b.reference_photo_url && (
                   <button
                     type="button"

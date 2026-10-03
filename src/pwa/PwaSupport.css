@@ -1,0 +1,20 @@
+.pwa-bar {
+  position: fixed; left: 12px; right: 12px; z-index: 9999;
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  max-width: 460px; margin: 0 auto;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 16px;
+  background: #0b0b0b; border: 1px solid rgba(184, 241, 76, 0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  color: #fff; font-family: inherit;
+}
+.pwa-icon { border-radius: 10px; flex: 0 0 auto; }
+.pwa-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pwa-text strong { font-size: 0.86rem; }
+.pwa-text span { font-size: 0.72rem; color: #b5b5b5; line-height: 1.35; }
+.pwa-share { display: inline-flex; align-items: center; gap: 3px; color: #b8f14c; }
+.pwa-btn {
+  flex: 0 0 auto; padding: 8px 14px; border-radius: 999px; border: 0; cursor: pointer;
+  background: #b8f14c; color: #0a0a0a; font-weight: 800; font-size: 0.78rem;
+}
+.pwa-x { flex: 0 0 auto; background: none; border: 0; color: #888; font-size: 1.4rem; line-height: 1; cursor: pointer; padding: 0 4px; }

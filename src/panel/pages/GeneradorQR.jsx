@@ -1,11 +1,13 @@
 import { usePanelAuth } from '../PanelAuthContext';
-import { business } from '../../config/business';
+import { useBusinessCatalog } from '../useBusinessCatalog';
 import './GeneradorQR.css';
 
-function buildUrl(params) {
+// Cada negocio tiene su propia página pública: /su-slug (el "/" pelado es la portada de TurnosBS)
+function buildUrl(slug, params) {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const qs = new URLSearchParams(params).toString();
-  return qs ? `${origin}/?${qs}` : `${origin}/`;
+  const base = slug ? `${origin}/${slug}` : origin;
+  return qs ? `${base}?${qs}` : base;
 }
 
 function qrImageUrl(targetUrl) {
@@ -41,9 +43,12 @@ export default function GeneradorQR() {
   const { session } = usePanelAuth();
   const isOwner = session.role === 'owner';
 
+  const { business, professionals: allPros, loading } = useBusinessCatalog(session.businessId);
+  const slug = business?.slug;
+
   const professionals = isOwner
-    ? business.professionals
-        : business.professionals.filter((p) => p.name === session.name);
+    ? allPros
+    : allPros.filter((p) => p.id === session.professionalId);
 
   return (
     <div className="qr">
@@ -52,30 +57,35 @@ export default function GeneradorQR() {
         <p className="qr-sub">Para pegar en la vidriera, compartir en redes o mandar por WhatsApp</p>
       </div>
 
+      {loading && <p className="qr-sub">Cargando…</p>}
+      {!loading && !slug && <p className="qr-sub">No pudimos cargar los datos de tu negocio. Recargá la página.</p>}
+
+      {slug && (
       <div className="qr-section">
         <h2>General</h2>
         <div className="qr-grid">
           <QRCard
             title="Reservar turno"
             hint="Va a la página normal: el cliente elige profesional, día y hora"
-            url={buildUrl({})}
+            url={buildUrl(slug, {})}
           />
         </div>
       </div>
+      )}
 
-      {professionals.map((pro) => (
+      {slug && professionals.map((pro) => (
         <div key={pro.id} className="qr-section">
           <h2>{isOwner ? pro.name : 'El mío'}</h2>
           <div className="qr-grid">
             <QRCard
               title={`Reservar con ${pro.name}`}
               hint="Ya viene con el profesional elegido"
-              url={buildUrl({ prof: pro.slug })}
+              url={buildUrl(slug, { prof: pro.slug })}
             />
             <QRCard
               title="Turno rápido de hoy"
               hint="Salta directo a los horarios libres de hoy (o del próximo día disponible)"
-              url={buildUrl({ prof: pro.slug, quick: '1' })}
+              url={buildUrl(slug, { prof: pro.slug, quick: '1' })}
             />
           </div>
         </div>

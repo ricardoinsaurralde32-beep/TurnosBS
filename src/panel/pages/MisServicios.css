@@ -16,15 +16,15 @@
 .ms-add-toggle:hover { opacity: 0.75; }
 
 .ms-add-form {
-  display: flex; gap: 8px; margin-bottom: 14px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px;
   background-color: var(--panel);
   border: 1px solid var(--neon);
   border-radius: 12px;
   padding: 10px;
   animation: fadeUp 0.25s ease-out both;
 }
-.ms-add-form input {
-  flex: 1;
+.ms-add-form input[type="text"], .ms-add-form input[type="number"] {
+  flex: 1 1 140px; min-width: 0; box-sizing: border-box;
   background-color: var(--black);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -35,6 +35,7 @@
 }
 .ms-add-form input:focus { border-color: var(--neon); }
 .ms-add-submit {
+  flex: 0 0 auto; margin-left: auto;
   padding: 8px 18px;
   background-color: var(--neon);
   color: var(--neon-ink, #0a0a0a);
@@ -206,3 +207,11 @@
   background-color: rgba(var(--neon-rgb), 0.1);
   border-color: rgba(var(--neon-rgb), 0.3);
 }
+.ms-my-price-wrap { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.ms-my-price-wrap > span { color: var(--gray); font-size: 0.74rem; font-weight: 700; flex: 0 0 auto; }
+.ms-my-price-wrap .ms-my-price { margin-top: 0; flex: 1 1 auto; min-width: 0; }
+.ms-add-error { flex: 1 0 100%; margin: 4px 0 0; }
+
+.ms-empty { padding: 18px; border: 1px dashed var(--border); border-radius: 12px; color: var(--gray); font-size: 0.83rem; line-height: 1.5; }
+.ms-empty p { margin: 0 0 6px; }
+.ms-empty strong { color: var(--white); }

@@ -197,3 +197,31 @@
 
 .dn-error { color: var(--danger); font-size: 0.78rem; margin: 8px 0; }
 .dn-save-error { text-align: center; margin-top: 20px; }
+.dn-logo-preview { margin: 6px 0 14px; padding: 12px; border: 1px dashed var(--border); border-radius: 12px; }
+.dn-logo-preview-title { display: block; color: var(--white); font-size: 0.8rem; font-weight: 700; margin-bottom: 10px; }
+.dn-logo-preview-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; margin-bottom: 16px; }
+.dn-logo-preview .dn-hint { margin: 0; line-height: 1.5; }
+.dn-lp { position: relative; background: #0b0b0b; border-radius: 10px; padding: 14px 10px 12px; overflow: hidden; border: 1px solid #222; }
+.dn-lp img { display: block; width: 100%; height: auto; object-fit: contain; margin: 0 auto; }
+.dn-lp i { display: block; height: 2px; background: #b8f14c; margin-top: 10px; box-shadow: 0 0 8px #b8f14c; }
+.dn-lp-m { width: 150px; }
+.dn-lp-pc { width: 220px; }
+
+/* ===== Logo: vista previa + botones ===== */
+.dn-logo-card { padding: 14px; border: 1px solid var(--border); border-radius: 14px; margin-bottom: 20px; background: rgba(var(--overlay-rgb), 0.03); }
+.dn-logo-title { margin: 0 0 12px; color: var(--white); font-size: 0.92rem; font-weight: 700; }
+.dn-logo-previews { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: 14px; margin-bottom: 14px; }
+.dn-lp-fig { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.dn-lp-fig figcaption { color: var(--gray); font-size: 0.7rem; font-weight: 600; }
+.dn-lp-fig-m { flex: 0 1 150px; width: 150px; }
+.dn-lp-fig-pc { flex: 1 1 200px; max-width: 260px; }
+.dn-lp-fig .dn-lp { width: 100%; box-sizing: border-box; }
+.dn-logo-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.dn-logo-actions .dn-logo-btn { width: 100%; box-sizing: border-box; justify-content: center; text-align: center; white-space: nowrap; padding: 11px 10px; }
+.dn-logo-actions:has(> .dn-logo-btn:only-child) { grid-template-columns: 1fr; }
+.dn-logo-note { margin: 0; line-height: 1.5; }
+
+.dn-check { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-size: 0.88rem; color: #ddd; cursor: pointer; }
+.dn-check input { width: 18px; height: 18px; accent-color: #b8f14c; }
+.dn-inline-actions { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+.dn-linkbtn { background: none; border: 0; padding: 0; color: #b8f14c; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }

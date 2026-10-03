@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SocialIcon, IconMapPin, IconClock } from './Icons';
 import ManageBookingModal from './ManageBookingModal';
+import { hoursSummary } from '../utils/hoursSummary';
 import './Footer.css';
 
 export default function Footer({ business }) {
   const year = new Date().getFullYear();
+  // Si el negocio escribió sus propios horarios se muestran tal cual; si no, se arman con su horario general
+  const hoursLines = (business.hoursText && business.hoursText.length) ? business.hoursText : hoursSummary(business.schedule);
   // Si el link trae ?turno=CODIGO, el modal de "gestionar turno" arranca abierto con ese código
   const [initialCode, setInitialCode] = useState(() => new URLSearchParams(window.location.search).get('turno'));
   const [manageOpen, setManageOpen] = useState(() => Boolean(initialCode));
@@ -68,7 +71,7 @@ export default function Footer({ business }) {
           <div className="ft-info">
             <IconClock />
             <div className="ft-hours">
-              {business.hoursText.map((line, i) => <span key={i}>{line}</span>)}
+              {hoursLines.length ? hoursLines.map((line, i) => <span key={i}>{line}</span>) : <span>Consultá los horarios disponibles al reservar</span>}
             </div>
           </div>
 
