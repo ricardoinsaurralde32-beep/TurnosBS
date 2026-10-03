@@ -203,3 +203,10 @@
 .mp-pill:disabled { opacity: 0.6; cursor: default; }
 .mp-photo-note { margin: 0; text-align: center; color: var(--gray); font-size: 0.7rem; line-height: 1.4; }
 .mp-card { min-width: 0; }
+
+.mp-social-hint { flex-basis: 100%; margin: 2px 0 0; font-size: 0.72rem; color: #888; line-height: 1.35; }
+
+@media (max-width: 640px) {
+  .mp-social-row select { flex: 1 1 auto; }
+  .mp-social-row input { flex: 1 1 100%; }
+}

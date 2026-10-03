@@ -83,6 +83,8 @@ export async function fetchBusinessData(slug) {
     socials: biz.socials || [],
     platform: { name: biz.platform_name, url: biz.platform_url },
     features: { referencePhoto: biz.feature_reference_photo },
+    showBusinessName: biz.show_business_name !== false,
+    showSlotDuration: biz.show_slot_duration === true,
     referencePhotoLabel: biz.reference_photo_label || '',
     referencePhotoHint: biz.reference_photo_hint || '',
     reminders: {
@@ -239,14 +241,26 @@ export async function insertReview({ professionalId, professionalName, rating, c
   return { error };
 }
 
-export async function fetchApprovedReviewsReal() {
+// Siempre filtradas por negocio: cada página muestra SOLO las reseñas de sus propios profesionales
+// (las reseñas aprobadas son públicas en la base, así que el filtro es obligatorio acá).
+export async function fetchApprovedReviewsReal(businessId) {
+  if (!businessId) return { data: [], error: null };
   const { data, error } = await supabase
-    .from('reviews').select('*').eq('approved', true).order('created_at', { ascending: false });
+    .from('reviews')
+    .select('*, professionals!inner(business_id)')
+    .eq('professionals.business_id', businessId)
+    .eq('approved', true)
+    .order('created_at', { ascending: false });
   return { data: data || [], error };
 }
 
-export async function fetchAllReviews() {
-  const { data, error } = await supabase.from('reviews').select('*').order('created_at', { ascending: false });
+export async function fetchAllReviews(businessId) {
+  if (!businessId) return { data: [], error: null };
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*, professionals!inner(business_id)')
+    .eq('professionals.business_id', businessId)
+    .order('created_at', { ascending: false });
   return { data: data || [], error };
 }
 

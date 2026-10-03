@@ -55,6 +55,7 @@
 }
 
 /* ===== Marca ===== */
+.ft-name { font-size: 1.3rem; font-weight: 800; line-height: 1.2; margin: 0 0 12px; color: var(--white); }
 .ft-logo {
   width: 100%;
   max-width: 190px;
@@ -277,7 +278,9 @@
   .ft-person-top { justify-content: center; }
   .ft-person-links { justify-content: center; }
 
-  .ft-info { justify-content: center; text-align: left; max-width: 300px; }
+  .ft-info { flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; max-width: 300px; }
+  .ft-info svg { margin-top: 0; }
+  .ft-hours { align-items: center; }
   .ft-map-btn { align-self: center; }
 }
 
@@ -316,4 +319,5 @@
   box-shadow: 0 0 22px rgba(var(--neon-rgb), 0.4);
   transform: translateY(-2px);
 }
-.ft-manage-btn:hover { background-color: rgba(10,10,10,0.16); transform: translateY(-2px); }
+.ft-manage-btn:hover { background-color: rgba(10,10,10,0.16); transform: translateY(-2px); }
+.ft-logo { border-radius: 12px; }

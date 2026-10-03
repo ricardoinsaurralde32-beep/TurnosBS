@@ -1,0 +1,31 @@
+.cdm-overlay {
+  position: fixed; inset: 0; z-index: 400; background-color: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.cdm {
+  width: 100%; max-width: 360px; max-height: 90vh; overflow-y: auto;
+  background-color: var(--panel, #111); border: 1px solid var(--border, rgba(255,255,255,0.12));
+  border-radius: 16px; padding: 18px; color: var(--white, #fff);
+}
+.cdm h3 { color: var(--white, #fff); font-size: 1rem; font-weight: 800; margin: 0 0 6px; }
+.cdm-help { color: var(--gray, #9a9a9a); font-size: 0.78rem; line-height: 1.45; margin: 0 0 12px; }
+.cdm-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.cdm-quick button {
+  background: transparent; border: 1px solid var(--border, rgba(255,255,255,0.18)); border-radius: 999px;
+  padding: 5px 11px; color: var(--white, #d9d9d9); font-size: 0.74rem; font-weight: 700; cursor: pointer;
+}
+.cdm-quick button:hover { border-color: var(--neon); color: var(--neon); }
+.cdm-days { display: flex; flex-direction: column; gap: 6px; }
+.cdm-day {
+  display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 9px 12px; border-radius: 10px;
+  border: 1px solid var(--border, rgba(255,255,255,0.1)); background-color: transparent;
+  color: var(--white, #fff); font-size: 0.85rem;
+}
+.cdm-day.on { border-color: var(--neon); background-color: rgba(var(--neon-rgb, 184,241,76), 0.1); }
+.cdm-day input { accent-color: var(--neon); width: 16px; height: 16px; }
+.cdm-warn { color: var(--gray, #777); font-size: 0.72rem; margin: 12px 0 0; }
+.cdm-actions { display: flex; gap: 8px; margin-top: 14px; }
+.cdm-cancel, .cdm-apply { flex: 1; padding: 11px 14px; border-radius: 999px; font-size: 0.85rem; font-weight: 800; cursor: pointer; }
+.cdm-cancel { background: none; border: 1px solid var(--border, rgba(255,255,255,0.18)); color: var(--gray, #bdbdbd); }
+.cdm-apply { background-color: var(--neon); border: none; color: var(--neon-ink, #0d0d0d); }
+.cdm-apply:disabled { opacity: 0.45; cursor: default; }

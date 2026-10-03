@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { usePanelAuth } from '../PanelAuthContext';
 import { useBusinessCatalog } from '../useBusinessCatalog';
 import './GeneradorQR.css';
@@ -16,13 +17,49 @@ function qrImageUrl(targetUrl) {
 
 function QRCard({ title, hint, url }) {
   const img = qrImageUrl(url);
+  const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const copyLink = async () => {
+    let ok = false;
     try {
       await navigator.clipboard.writeText(url);
+      ok = true;
     } catch {
-      // TODO: mostrar aviso visual si el navegador bloquea el portapapeles
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch { ok = false; }
     }
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  // Descarga directa: baja la imagen y la guarda sin abrir otra ventana
+  const downloadQr = async () => {
+    setDownloading(true);
+    try {
+      const res = await fetch(img);
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `qr-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'turnos'}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    } catch {
+      window.open(img, '_blank', 'noopener');
+    }
+    setDownloading(false);
   };
 
   return (
@@ -32,8 +69,8 @@ function QRCard({ title, hint, url }) {
       {hint && <p className="qr-hint">{hint}</p>}
       <p className="qr-url">{url}</p>
       <div className="qr-actions">
-        <button type="button" className="qr-btn" onClick={copyLink}>Copiar link</button>
-        <a className="qr-btn qr-btn-ghost" href={img} download target="_blank" rel="noreferrer">Descargar</a>
+        <button type="button" className="qr-btn" onClick={copyLink}>{copied ? '¡Link copiado ✓!' : 'Copiar link'}</button>
+        <button type="button" className="qr-btn qr-btn-ghost" onClick={downloadQr} disabled={downloading}>{downloading ? 'Descargando…' : 'Descargar'}</button>
       </div>
     </div>
   );
@@ -92,4 +129,4 @@ export default function GeneradorQR() {
       ))}
     </div>
   );
-}
+}

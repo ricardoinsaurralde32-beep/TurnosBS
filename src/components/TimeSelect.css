@@ -1,0 +1,21 @@
+.tsel { display: inline-flex; align-items: center; gap: 4px; }
+.tsel b { color: var(--gray, #777); font-weight: 700; }
+.tsel .tsel-h { color: var(--gray, #777); font-style: normal; font-size: 0.72rem; margin-left: 2px; }
+.tsel select {
+  appearance: none; -webkit-appearance: none;
+  background-color: var(--black, #050505); border: 1px solid var(--border, rgba(255,255,255,0.12)); border-radius: 8px;
+  padding: 8px 10px; color: var(--white, #fff); font-size: 0.9rem; font-variant-numeric: tabular-nums;
+  min-width: 52px; text-align: center; cursor: pointer;
+}
+.tsel select:focus { outline: none; border-color: var(--neon, #b8f14c); }
+
+/* Una sola pastilla por hora: 09:40 (sin la "h" ni separaciones sueltas) */
+.tsel {
+  gap: 0; padding: 0 6px; border-radius: 10px;
+  background-color: var(--black, #050505); border: 1px solid var(--border, rgba(255,255,255,0.12));
+}
+.tsel:focus-within { border-color: var(--neon, #b8f14c); }
+.tsel b { margin: 0 -2px; }
+.tsel select { border: 0; background-color: transparent; padding: 10px 4px; min-width: 0; width: 2.1em; font-weight: 700; }
+.tsel select:focus { border: 0; }
+.tsel-bad { border-color: var(--danger, #ff6b6b); }

@@ -49,7 +49,7 @@ function useWanderingOrbit(seed) {
   return ref;
 }
 
-export default function ProCard({ pro, seed, isActive, onChoose, onViewPortfolio }) {
+export default function ProCard({ pro, seed, isActive, single = false, onChoose, onViewPortfolio }) {
   const orbitRef = useWanderingOrbit(seed);
   const hasPortfolio = pro.portfolio?.length > 0 && !!onViewPortfolio;
   const [zoomOpen, setZoomOpen] = useState(false);
@@ -70,7 +70,7 @@ export default function ProCard({ pro, seed, isActive, onChoose, onViewPortfolio
   })();
 
   return (
-    <article className={`pro-card ${isActive ? 'active' : ''}`}>
+    <article className={`pro-card ${isActive ? 'active' : ''} ${single ? 'pro-card-single' : ''}`}>
       <div className="pro-ring">
         <div className="pro-orbit" ref={orbitRef}><span /></div>
         <div
@@ -115,7 +115,7 @@ export default function ProCard({ pro, seed, isActive, onChoose, onViewPortfolio
             <IconImage size={13} /> Ver trabajos
           </button>
         )}
-        <button className="btn-neon btn-sm" onClick={onChoose}>Elegir</button>
+        {!single && <button className="btn-neon btn-sm" onClick={onChoose}>Elegir</button>}
       </div>
 
       {zoomOpen && createPortal(
@@ -130,4 +130,4 @@ export default function ProCard({ pro, seed, isActive, onChoose, onViewPortfolio
       )}
     </article>
   );
-}
+}

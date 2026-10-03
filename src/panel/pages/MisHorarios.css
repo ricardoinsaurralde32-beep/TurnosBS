@@ -80,3 +80,14 @@
   font-size: 0.72rem;
   margin-top: 2px;
 }
+
+.mh-range { flex-wrap: wrap; }
+.mh-range-invalid .tsel select { border-color: var(--danger, #ff6b6b); }
+
+/* Cada horario en una sola línea: [09:00] a [09:40] × */
+.mh-range { flex-wrap: nowrap; gap: 10px; padding: 4px 0; }
+.mh-range.mh-range-invalid { flex-wrap: wrap; }
+.mh-range-invalid .tsel { border-color: var(--danger, #ff6b6b); }
+.mh-range-invalid .tsel select { border: 0; }
+.mh-range-sep { font-size: 0.82rem; }
+.mh-remove { flex: 0 0 auto; }

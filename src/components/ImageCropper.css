@@ -41,3 +41,5 @@
 .icr-frame, .icr-prev-box { box-sizing: content-box; }
 .icr-actions { position: sticky; bottom: -16px; background: #101010; padding: 10px 0 2px; }
 @media (min-width: 720px) { .icr-panel { max-width: 460px; } }
+
+.icr-actions label.icr-ok { flex: 1; display: flex; align-items: center; justify-content: center; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; cursor: pointer; box-sizing: border-box; text-align: center; }

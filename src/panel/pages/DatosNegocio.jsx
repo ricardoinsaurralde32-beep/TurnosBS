@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { normalizeImage } from '../../utils/normalizeImage';
-import { hoursSummary } from '../../utils/hoursSummary';
+import { hoursFromProfessionals } from '../../utils/hoursSummary';
 import ImageCropper from '../../components/ImageCropper';
 import { supabase } from '../../lib/supabaseClient';
 import { storageObjectExists } from '../../utils/storageExists';
 import { shrinkImage } from '../../utils/shrinkImage';
 import { usePanelAuth } from '../PanelAuthContext';
-import { fetchBusinessById, updateBusinessReal, uploadImage, deleteImage, fileExt } from '../../lib/api';
+import { fetchBusinessById, updateBusinessReal, uploadImage, deleteImage, fileExt, fetchAllProfessionals } from '../../lib/api';
 import { formatLead } from '../../utils/reminders';
 import { IconX, IconCamera, IconPin } from '../../components/Icons';
 import LocationMapModal from '../LocationMapModal';
@@ -30,6 +30,8 @@ const WEEKDAYS = [
   { id: 3, label: 'Miércoles' }, { id: 4, label: 'Jueves' }, { id: 5, label: 'Viernes' },
   { id: 6, label: 'Sábado' }
 ];
+const DEFAULT_REF_LABEL = 'Foto de referencia (opcional)';
+const DEFAULT_REF_HINT = '¿Tenés una imagen del estilo que buscás? Subila y el profesional la ve antes del turno.';
 const PRESET_MINUTES = [15, 20, 30, 40, 45, 60, 90];
 
 function cloneSchedule(schedule) {
@@ -102,9 +104,12 @@ export default function DatosNegocio() {
   const [showMapModal, setShowMapModal] = useState(false);
   const [policyNotice, setPolicyNotice] = useState('');
   const [refEnabled, setRefEnabled] = useState(true);
-  const [refLabel, setRefLabel] = useState('');
-  const [refHint, setRefHint] = useState('');
+  const [refLabel, setRefLabel] = useState(DEFAULT_REF_LABEL);
+  const [refHint, setRefHint] = useState(DEFAULT_REF_HINT);
   const [hoursCustom, setHoursCustom] = useState('');
+  const [hoursAuto, setHoursAuto] = useState('');
+  const [showName, setShowName] = useState(true);
+  const [showDuration, setShowDuration] = useState(false);
   const [minHoursAhead, setMinHoursAhead] = useState(8);
   const [slotMinutes, setSlotMinutes] = useState(40);
   const [customMode, setCustomMode] = useState(false);
@@ -143,9 +148,16 @@ export default function DatosNegocio() {
         setLng(data.lng ?? null);
         setPolicyNotice(data.policy_notice || '');
         setRefEnabled(data.feature_reference_photo !== false);
-        setRefLabel(data.reference_photo_label || '');
-        setRefHint(data.reference_photo_hint || '');
-        setHoursCustom((data.hours_text || []).join('\n'));
+        setRefLabel(data.reference_photo_label || DEFAULT_REF_LABEL);
+        setRefHint(data.reference_photo_hint || DEFAULT_REF_HINT);
+        setShowName(data.show_business_name !== false);
+        setShowDuration(data.show_slot_duration === true);
+        // Horarios del pie: si no escribió los suyos, se arma el resumen con los horarios de los profesionales
+        fetchAllProfessionals(session.businessId).then(({ data: pros }) => {
+          const auto = hoursFromProfessionals(data.schedule, pros).join('\n');
+          setHoursAuto(auto);
+          setHoursCustom((data.hours_text || []).length ? data.hours_text.join('\n') : auto);
+        });
         setMinHoursAhead(data.min_hours_ahead ?? 8);
         setSlotMinutes(data.slot_minutes ?? 40);
         setCustomMode(!PRESET_MINUTES.includes(data.slot_minutes));
@@ -218,26 +230,6 @@ export default function DatosNegocio() {
     else { setCustomMode(false); setSlotMinutes(Number(e.target.value)); }
   };
 
-  const toggleDayOff = (dayId) => {
-    touch();
-    setSchedule((prev) => ({ ...prev, [dayId]: prev[dayId].length > 0 ? [] : [['09:00', '13:00']] }));
-  };
-  // Arranca en blanco (00:00 a 00:00) para que se note que es un turno nuevo y haya que cargarlo entero.
-  const addRange = (dayId) => { touch(); setSchedule((prev) => ({ ...prev, [dayId]: [...prev[dayId], ['00:00', '00:00']] })); };
-  const removeRange = (dayId, i) => { touch(); setSchedule((prev) => ({ ...prev, [dayId]: prev[dayId].filter((_, idx) => idx !== i) })); };
-  const updateRange = (dayId, i, field, value) => {
-    touch();
-    setSchedule((prev) => ({
-      ...prev,
-      [dayId]: prev[dayId].map((r, idx) => {
-        if (idx !== i) return r;
-        const next = [...r];
-        next[field === 'from' ? 0 : 1] = value;
-        return next;
-      })
-    }));
-  };
-
   const [logoCrop, setLogoCrop] = useState(null);
   const [pendingLogoOriginal, setPendingLogoOriginal] = useState(null);
   const [needLogoOriginal, setNeedLogoOriginal] = useState(false);
@@ -294,6 +286,14 @@ export default function DatosNegocio() {
     }
   };
 
+  const removeLogo = async () => {
+    if (!window.confirm('¿Quitar el logo? Tu página va a mostrar solo el nombre del negocio.')) return;
+    setUploadingLogo(true);
+    const { error } = await updateBusinessReal(session.businessId, { logo_url: null });
+    setUploadingLogo(false);
+    if (!error) { touch(); setLogo(''); }
+  };
+
   const addPlacePhoto = async (e) => {
     const picked = e.target.files?.[0];
     e.target.value = '';
@@ -348,10 +348,13 @@ export default function DatosNegocio() {
     const { error } = await updateBusinessReal(session.businessId, {
       name, tagline, address, address_detail: addressDetail, policy_notice: policyNotice,
       feature_reference_photo: refEnabled,
-      reference_photo_label: refLabel.trim() || null,
-      reference_photo_hint: refHint.trim() || null,
-      hours_text: hoursCustom.split('\n').map((l) => l.trim()).filter(Boolean),
-      min_hours_ahead: minHoursAhead, slot_minutes: slotMinutes, schedule, place_photos: placePhotos,
+      reference_photo_label: (refLabel.trim() && refLabel.trim() !== DEFAULT_REF_LABEL) ? refLabel.trim() : null,
+      reference_photo_hint: (refHint.trim() && refHint.trim() !== DEFAULT_REF_HINT) ? refHint.trim() : null,
+      show_business_name: showName,
+      show_slot_duration: showDuration,
+      // Si lo dejó igual al resumen automático, no se guarda: así sigue el horario si lo cambia después
+      hours_text: hoursCustom.trim() === hoursAuto.trim() ? [] : hoursCustom.split('\n').map((l) => l.trim()).filter(Boolean),
+      min_hours_ahead: Number(minHoursAhead) || 0, slot_minutes: slotMinutes, schedule, place_photos: placePhotos,
       color_scheme: colorScheme,
       custom_colors: colorScheme === CUSTOM_SCHEME_ID ? customColors : null,
       theme_mode: themeMode,
@@ -445,6 +448,11 @@ export default function DatosNegocio() {
                 Ajustar encuadre
               </button>
             )}
+            {logo && (
+              <button type="button" className="dn-logo-btn dn-logo-btn-danger" onClick={removeLogo} disabled={uploadingLogo}>
+                Quitar logo
+              </button>
+            )}
           </div>
           <p className="dn-hint dn-logo-note">Funciona mejor un logo ancho (rectangular). Si subís uno cuadrado, podés encuadrar el centro para que llene bien el diseño. Tu imagen original se guarda entera: podés reencuadrar cuando quieras sin perder nada.</p>
         </div>
@@ -483,6 +491,32 @@ export default function DatosNegocio() {
       </div>
 
       <div className="dn-section">
+        <div className="dn-section-head">
+          <h2>Fotos del local</h2>
+          <label className="dn-add-photo">
+            <input type="file" accept="image/*" onChange={addPlacePhoto} hidden disabled={uploadingPlace} />
+            {uploadingPlace ? 'Subiendo...' : '+ Agregar foto'}
+          </label>
+        </div>
+
+        {placePhotos.length === 0 ? (
+          <p className="dn-hint">No hay fotos cargadas</p>
+        ) : (
+          <div className="dn-photos-grid">
+            {placePhotos.map((p, i) => (
+              <div key={i} className="dn-photo-card">
+                <div className="dn-photo-img">
+                  <img src={p.src} alt={p.caption || `Foto ${i + 1}`} />
+                  <button type="button" onClick={() => removePlacePhoto(i)} aria-label="Quitar"><IconX size={13} /></button>
+                </div>
+                <input type="text" placeholder="Descripción" value={p.caption} onChange={(e) => updatePlaceCaption(i, e.target.value)} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="dn-section">
         <h2>Política de reservas</h2>
         <div className="dn-field">
           <label>Aviso importante (se muestra antes del calendario y va en el turno del calendario y en el mail de confirmación)</label>
@@ -491,7 +525,8 @@ export default function DatosNegocio() {
         <div className="dn-field-row">
           <div className="dn-field">
             <label>Anticipación mínima (horas)</label>
-            <input type="number" min="0" value={minHoursAhead} onChange={(e) => { touch(); setMinHoursAhead(Number(e.target.value)); }} />
+            <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" value={minHoursAhead}
+                   onChange={(e) => { touch(); setMinHoursAhead(e.target.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 3)); }} />
           </div>
           <div className="dn-field">
             <label>Duración de cada turno</label>
@@ -506,33 +541,47 @@ export default function DatosNegocio() {
             )}
           </div>
         </div>
-        <p className="dn-hint">
-          El precio y si se muestra al cliente ahora se elige servicio por servicio en "Mis servicios", no acá.
-        </p>
+        <label className="dn-toggle-row">
+          <span className="dn-switch">
+            <input type="checkbox" checked={showDuration} onChange={(e) => { touch(); setShowDuration(e.target.checked); }} />
+            <span className="dn-switch-track"><span className="dn-switch-thumb" /></span>
+          </span>
+          <span>Mostrar la duración del turno a los clientes<small>Apagado por defecto. Prendelo si tu servicio dura siempre lo mismo.</small></span>
+        </label>
       </div>
 
       <div className="dn-section">
         <h2>Textos de tu página</h2>
         <p className="dn-hint">Personalizá lo que lee el cliente al reservar y en el pie de tu página.</p>
 
-        <label className="dn-check">
-          <input type="checkbox" checked={refEnabled} onChange={(e) => { touch(); setRefEnabled(e.target.checked); }} />
-          <span>Dejar que el cliente suba una imagen al reservar</span>
+        <label className="dn-toggle-row">
+          <span className="dn-switch">
+            <input type="checkbox" checked={showName} onChange={(e) => { touch(); setShowName(e.target.checked); }} />
+            <span className="dn-switch-track"><span className="dn-switch-thumb" /></span>
+          </span>
+          <span>Mostrar el nombre del negocio arriba en tu página<small>Apagalo si tu logo ya dice el nombre. Si no tenés logo, se ve igual el nombre.</small></span>
+        </label>
+
+        <label className="dn-toggle-row">
+          <span className="dn-switch">
+            <input type="checkbox" checked={refEnabled} onChange={(e) => { touch(); setRefEnabled(e.target.checked); }} />
+            <span className="dn-switch-track"><span className="dn-switch-thumb" /></span>
+          </span>
+          <span>Dejar que el cliente suba una imagen al reservar<small>Por ejemplo una foto del estilo que busca, o un comprobante.</small></span>
         </label>
         {refEnabled && (
           <>
             <div className="dn-field">
               <label>Título del campo</label>
-              <input type="text" value={refLabel} maxLength={80} placeholder="Foto de referencia (opcional)"
+              <input type="text" value={refLabel} maxLength={80}
                      onChange={(e) => { touch(); setRefLabel(e.target.value); }} />
             </div>
             <div className="dn-field">
-              <label>Texto de ayuda</label>
+              <label>Texto de ayuda (opcional)</label>
               <textarea rows="3" value={refHint} maxLength={240}
-                        placeholder="¿Tenés una imagen del estilo que buscás? Subila y el profesional la ve antes del turno."
                         onChange={(e) => { touch(); setRefHint(e.target.value); }} />
               <p className="dn-hint" style={{ marginTop: 6 }}>
-                Dejalo vacío y se usa el texto de siempre. Ejemplo para canchas o negocios que piden seña: "Subí el comprobante de la transferencia al alias cancha.goya".
+                Podés dejarlo como está. Ejemplo para canchas o negocios que piden seña: "Subí el comprobante de la transferencia al alias cancha.goya".
               </p>
             </div>
           </>
@@ -544,15 +593,12 @@ export default function DatosNegocio() {
                     placeholder={'Una línea por renglón. Ej:\nLunes a viernes · 09:00 a 21:00\nSábado · 09:00 a 13:00'}
                     onChange={(e) => { touch(); setHoursCustom(e.target.value); }} />
           <div className="dn-inline-actions">
-            <button type="button" className="dn-linkbtn" onClick={() => { touch(); setHoursCustom(hoursSummary(schedule).join('\n')); }}>
-              Completar con mi horario general
+            <button type="button" className="dn-linkbtn" onClick={() => { touch(); setHoursCustom(hoursAuto); }}>
+              Volver a generar con mis horarios
             </button>
-            {hoursCustom && (
-              <button type="button" className="dn-linkbtn" onClick={() => { touch(); setHoursCustom(''); }}>Borrar</button>
-            )}
           </div>
           <p className="dn-hint" style={{ marginTop: 6 }}>
-            Si lo dejás vacío, se arma solo con tu horario general. La dirección se edita arriba, en "Ubicación".
+            Se arma solo con los horarios del profesional dueño (los de "Mis horarios"). Si lo cambiás a mano, queda como lo escribas. La dirección se edita arriba, en "Ubicación".
           </p>
         </div>
       </div>
@@ -605,75 +651,6 @@ export default function DatosNegocio() {
         />
       </div>
 
-      <div className="dn-section">
-        <h2>Horario general</h2>
-        <p className="dn-hint">Esto es lo que usa cualquier profesional que no tenga su propio horario cargado</p>
-
-        <div className="dn-days">
-          {WEEKDAYS.map((day) => {
-            const ranges = schedule[day.id] || [];
-            const isOff = ranges.length === 0;
-            return (
-              <div key={day.id} className={`dn-day ${isOff ? 'off' : ''}`}>
-                <div className="dn-day-head">
-                  <span>{day.label}</span>
-                  <label className="dn-switch">
-                    <input type="checkbox" checked={!isOff} onChange={() => toggleDayOff(day.id)} />
-                    <span className="dn-switch-track"><span className="dn-switch-thumb" /></span>
-                  </label>
-                </div>
-                {isOff ? (
-                  <p className="dn-off-label">Cerrado</p>
-                ) : (
-                  <div className="dn-ranges">
-                    {ranges.map((range, i) => {
-                      const toMinCheck = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
-                      const invalid = toMinCheck(range[1]) <= toMinCheck(range[0]);
-                      return (
-                        <div key={i} className={`dn-range ${invalid ? 'dn-range-invalid' : ''}`}>
-                          <input type="time" value={range[0]} onChange={(e) => updateRange(day.id, i, 'from', e.target.value)} />
-                          <span>a</span>
-                          <input type="time" value={range[1]} onChange={(e) => updateRange(day.id, i, 'to', e.target.value)} />
-                          {ranges.length > 1 && <button type="button" onClick={() => removeRange(day.id, i)}>×</button>}
-                          {invalid && <span className="dn-range-warning">"Hasta" debe ser después de "desde"</span>}
-                        </div>
-                      );
-                    })}
-                    <button type="button" className="dn-add-range" onClick={() => addRange(day.id)}>+ Agregar horario</button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="dn-section">
-        <div className="dn-section-head">
-          <h2>Fotos del local</h2>
-          <label className="dn-add-photo">
-            <input type="file" accept="image/*" onChange={addPlacePhoto} hidden disabled={uploadingPlace} />
-            {uploadingPlace ? 'Subiendo...' : '+ Agregar foto'}
-          </label>
-        </div>
-
-        {placePhotos.length === 0 ? (
-          <p className="dn-hint">No hay fotos cargadas</p>
-        ) : (
-          <div className="dn-photos-grid">
-            {placePhotos.map((p, i) => (
-              <div key={i} className="dn-photo-card">
-                <div className="dn-photo-img">
-                  <img src={p.src} alt={p.caption || `Foto ${i + 1}`} />
-                  <button type="button" onClick={() => removePlacePhoto(i)} aria-label="Quitar"><IconX size={13} /></button>
-                </div>
-                <input type="text" placeholder="Descripción" value={p.caption} onChange={(e) => updatePlaceCaption(i, e.target.value)} />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {saveError && <p className="dn-error dn-save-error">{saveError}</p>}
 
       <div className="dn-footer">
@@ -691,4 +668,4 @@ export default function DatosNegocio() {
       />
     </div>
   );
-}
+}

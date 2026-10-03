@@ -20,6 +20,14 @@ const SOCIAL_TYPES = [
   { value: 'tiktok', label: 'TikTok' }
 ];
 
+// Qué tiene que escribir la persona según la red (placeholder + ayuda)
+const SOCIAL_HELP = {
+  instagram: { placeholder: 'Tu usuario, ej: richard.barber', hint: 'Solo tu usuario. El @ es opcional, no hace falta.' },
+  whatsapp: { placeholder: 'Tu número con código de país, ej: 5491123456789', hint: 'Solo números, con código de país y sin + ni espacios. Ej Argentina: 549 + área + número.' },
+  facebook: { placeholder: 'Tu usuario o nombre de página, ej: richard.barber', hint: 'Lo que aparece después de facebook.com/ en tu perfil o página.' },
+  tiktok: { placeholder: 'Tu usuario, ej: richard.barber', hint: 'Solo tu usuario. El @ es opcional, no hace falta.' }
+};
+
 // Arma el link solo, según la red elegida y lo que escribís en el primer campo
 function buildSocialUrl(type, label) {
   const clean = (label || '').trim();
@@ -289,8 +297,9 @@ export default function MiPerfil() {
                 <select value={s.type} onChange={(e) => updateSocial(i, 'type', e.target.value)}>
                   {SOCIAL_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
-                <input type="text" placeholder="Ej: @richard" value={s.label} onChange={(e) => updateSocial(i, 'label', e.target.value)} />
-                <input type="text" placeholder="Link completo" value={s.url} onChange={(e) => updateSocial(i, 'url', e.target.value)} />
+                <input type="text" inputMode={s.type === 'whatsapp' ? 'numeric' : 'text'} placeholder={(SOCIAL_HELP[s.type] || SOCIAL_HELP.instagram).placeholder} value={s.label} onChange={(e) => updateSocial(i, 'label', e.target.value)} />
+                <input type="text" placeholder="Link (se arma solo)" value={s.url} onChange={(e) => updateSocial(i, 'url', e.target.value)} />
+                <p className="mp-social-hint">{(SOCIAL_HELP[s.type] || SOCIAL_HELP.instagram).hint}</p>
                 <button type="button" className="mp-remove" onClick={() => removeSocial(i)} aria-label="Quitar"><IconX size={13} /></button>
               </div>
             ))}
@@ -359,4 +368,4 @@ export default function MiPerfil() {
       </div>
     </div>
   );
-}
+}

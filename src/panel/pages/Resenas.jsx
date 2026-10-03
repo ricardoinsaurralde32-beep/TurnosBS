@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { usePanelAuth } from '../PanelAuthContext';
 import { fetchAllReviews, setReviewApprovedReal, deleteReviewReal } from '../../lib/api';
 import { IconStar, IconX } from '../../components/Icons';
 import './Resenas.css';
 
 export default function Resenas() {
+  const { session } = usePanelAuth();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [shown, setShown] = useState(15);
@@ -11,11 +13,11 @@ export default function Resenas() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data } = await fetchAllReviews();
+      const { data } = await fetchAllReviews(session.businessId);
       setReviews(data);
       setLoading(false);
     })();
-  }, []);
+  }, [session.businessId]);
 
   const toggleApprove = async (id, current) => {
     setReviews((prev) => prev.map((r) => (r.id === id ? { ...r, approved: !current } : r)));
@@ -73,4 +75,4 @@ export default function Resenas() {
       )}
     </div>
   );
-}
+}

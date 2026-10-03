@@ -51,14 +51,14 @@
 .hero-logo {
   display: flex;
   justify-content: center;
-  padding: 36px 24px 24px;
+  padding: 0 0 18px;
 }
 .hero-logo img {
+  display: block;
   width: 100%;
-  max-width: 300px;
+  max-width: none;
   height: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 0 24px rgba(var(--neon-rgb), 0.28));
+  object-fit: cover;
 }
 
 .neon-line {
@@ -590,7 +590,7 @@
 
 /* ================= TABLET / DESKTOP ================= */
 @media (min-width: 900px) {
-  .hero-logo img { max-width: 340px; }
+  .hero-logo img { max-height: 380px; object-fit: cover; }
 
   .section { max-width: 620px; padding: 64px 24px; }
 
@@ -785,3 +785,29 @@
 }
 .duration-pill::before { content: ''; width: 8px; height: 8px; border-radius: 50%; border: 2px solid currentColor; box-sizing: border-box; }
 .duration-pill-c { display: flex; width: fit-content; }
+
+/* ===== Nombre del negocio en el inicio ===== */
+.hero-name {
+  font-family: 'Poppins', 'Inter', system-ui, sans-serif; font-weight: 800; text-align: center;
+  font-size: clamp(1.5rem, 6.5vw, 2.3rem); line-height: 1.15; letter-spacing: -0.2px;
+  padding: 0 22px 20px; margin: 0; color: var(--white);
+}
+.hero-name-solo { padding-top: 40px; }
+
+/* ===== Un solo profesional: tarjeta centrada, sin "Elegir" ===== */
+.pro-grid.pro-grid-single { grid-template-columns: 1fr; justify-items: center; margin-top: 0; }
+.pro-card-single { max-width: 340px; width: 100%; }
+.pro-card-single .pro-desc { max-width: 300px; }
+.pro-card-single .pro-ring { width: 170px; height: 170px; }
+.pro-name {
+  font-family: 'Poppins', 'Inter', system-ui, sans-serif; font-style: normal; font-weight: 800;
+  text-transform: none; letter-spacing: -0.2px; font-size: 1.3rem;
+}
+.pro-card-single .pro-name { font-size: 1.5rem; }
+
+/* Un solo profesional: menos aire arriba y abajo */
+.section.section-pro-single { padding-top: 14px; padding-bottom: 14px; }
+.section-pro-single .pro-grid { margin-top: 0; }
+
+/* Solo imagen (sin nombre): la línea neón se pega al borde de la imagen */
+.hero-logo.hero-logo-flush { padding-bottom: 0; }

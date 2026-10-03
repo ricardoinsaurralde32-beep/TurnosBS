@@ -16,9 +16,23 @@ function mergeRanges(ranges) {
   return out;
 }
 
+// Deja como mucho 2 bloques por día: mañana (primer turno hasta el cierre del mediodía) y
+// tarde (primer turno de la tarde hasta el último cierre). Corta en el hueco más grande.
+function toBlocks(ranges) {
+  const merged = mergeRanges(ranges);
+  if (merged.length <= 1) return merged;
+  let cut = 0; let best = -1;
+  for (let i = 1; i < merged.length; i += 1) {
+    const gap = toMin(merged[i][0]) - toMin(merged[i - 1][1]);
+    if (gap > best) { best = gap; cut = i; }
+  }
+  if (best < 30) return [[merged[0][0], merged[merged.length - 1][1]]];
+  return [[merged[0][0], merged[cut - 1][1]], [merged[cut][0], merged[merged.length - 1][1]]];
+}
+
 export function hoursSummary(schedule) {
   if (!schedule) return [];
-  const days = ORDER.map((id) => ({ id, text: mergeRanges(schedule[id]).map(([f, t]) => `${f} a ${t}`).join(' y ') }));
+  const days = ORDER.map((id) => ({ id, text: toBlocks(schedule[id]).map(([f, t]) => `${f} a ${t}`).join(' y ') }));
   if (days.every((d) => !d.text)) return [];
   const groups = [];
   for (const d of days) {
@@ -41,4 +55,23 @@ export function formatDuration(min) {
   const h = Math.floor(m / 60); const r = m % 60;
   if (!r) return h === 1 ? '1 hora' : `${h} horas`;
   return `${h} h ${r} min`;
+}
+
+// Horario del negocio a partir de lo que cargó cada profesional (si un profesional no tiene
+// horario propio, cuenta el horario base del negocio). Une los de todos en un solo resumen.
+export function hoursFromProfessionals(baseSchedule, professionals) {
+  const all = professionals || [];
+  // El pie muestra los horarios del profesional dueño; si no hay uno marcado, los de todos
+  const owners = all.filter((p) => p.isOwner || p.is_owner);
+  const pros = owners.length ? owners : all;
+  if (pros.length === 0) return hoursSummary(baseSchedule);
+  const merged = {};
+  for (let d = 0; d < 7; d += 1) {
+    merged[d] = [];
+    pros.forEach((p) => {
+      const sch = p.schedule || baseSchedule || {};
+      (sch[d] || []).forEach((r) => merged[d].push([r[0], r[1]]));
+    });
+  }
+  return hoursSummary(merged);
 }

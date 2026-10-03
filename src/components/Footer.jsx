@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SocialIcon, IconMapPin, IconClock } from './Icons';
 import ManageBookingModal from './ManageBookingModal';
-import { hoursSummary } from '../utils/hoursSummary';
+import { hoursFromProfessionals } from '../utils/hoursSummary';
 import './Footer.css';
 
 export default function Footer({ business }) {
   const year = new Date().getFullYear();
   // Si el negocio escribió sus propios horarios se muestran tal cual; si no, se arman con su horario general
-  const hoursLines = (business.hoursText && business.hoursText.length) ? business.hoursText : hoursSummary(business.schedule);
+  const hoursLines = (business.hoursText && business.hoursText.length) ? business.hoursText : hoursFromProfessionals(business.schedule, business.professionals.filter((p) => (p.services || []).length > 0));
   // Si el link trae ?turno=CODIGO, el modal de "gestionar turno" arranca abierto con ese código
   const [initialCode, setInitialCode] = useState(() => new URLSearchParams(window.location.search).get('turno'));
   const [manageOpen, setManageOpen] = useState(() => Boolean(initialCode));
@@ -20,7 +20,9 @@ export default function Footer({ business }) {
       <div className="ft-grid">
 
         <div className="ft-col ft-brand">
-          <img src={business.logo} alt={business.name} className="ft-logo" />
+          {business.logo
+            ? <img src={business.logo} alt={business.name} className="ft-logo" />
+            : <p className="ft-name">{business.name}</p>}
           <p className="ft-tagline">{business.tagline}</p>
 
           <div className="ft-socials">
@@ -102,4 +104,4 @@ export default function Footer({ business }) {
       )}
     </footer>
   );
-}
+}

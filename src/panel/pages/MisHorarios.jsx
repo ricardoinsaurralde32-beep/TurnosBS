@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { usePanelAuth } from '../PanelAuthContext';
 import { fetchOwnProfessional, updateProfessional, fetchBusinessById } from '../../lib/api';
+import TimeSelect from '../../components/TimeSelect';
+import CopyDaysModal from '../../components/CopyDaysModal';
 import './MisHorarios.css';
 
 const WEEKDAYS = [
@@ -86,24 +88,23 @@ export default function MisHorarios() {
     }));
   };
 
-  const applyToAllActiveDays = (sourceDayId) => {
-    const sourceLabel = WEEKDAYS.find((d) => d.id === sourceDayId)?.label;
-    const confirmMsg = `¿Copiar el horario de ${sourceLabel} a todos los demás días que estén activos?\n\nOJO: esto reemplaza los horarios que ya tengan cargados esos días (por ejemplo, si viernes o sábado tienen un horario distinto, se van a perder).`;
-    if (!window.confirm(confirmMsg)) return;
+  const [copySource, setCopySource] = useState(null);
 
+  const applyCopy = (targets) => {
+    const sourceId = copySource;
+    setCopySource(null);
+    if (sourceId == null || targets.length === 0) return;
     setSaved(false);
     setSchedule((prev) => {
-      const sourceRanges = prev[sourceDayId].map(([f, t]) => [f, t]);
+      const sourceRanges = prev[sourceId].map(([f, t]) => [f, t]);
       const next = { ...prev };
-      WEEKDAYS.forEach((day) => {
-        if (day.id === sourceDayId) return;
-        if (next[day.id].length === 0) return;
-        next[day.id] = sourceRanges.map(([f, t]) => [f, t]);
-        lastRangesRef.current[day.id] = next[day.id];
+      targets.forEach((id) => {
+        next[id] = sourceRanges.map(([f, t]) => [f, t]);
+        lastRangesRef.current[id] = next[id];
       });
       return next;
     });
-    setAppliedFrom(sourceDayId);
+    setAppliedFrom(sourceId);
     setTimeout(() => setAppliedFrom(null), 2000);
   };
 
@@ -163,9 +164,9 @@ export default function MisHorarios() {
                     const invalid = toMin(range[1]) <= toMin(range[0]);
                     return (
                       <div key={i} className={`mh-range ${invalid ? 'mh-range-invalid' : ''}`}>
-                        <input type="time" value={range[0]} onChange={(e) => updateRange(day.id, i, 'from', e.target.value)} />
+                        <TimeSelect label="Desde" value={range[0]} onChange={(v) => updateRange(day.id, i, 'from', v)} />
                         <span className="mh-range-sep">a</span>
-                        <input type="time" value={range[1]} onChange={(e) => updateRange(day.id, i, 'to', e.target.value)} />
+                        <TimeSelect label="Hasta" value={range[1]} onChange={(v) => updateRange(day.id, i, 'to', v)} />
                         {ranges.length > 1 && (
                           <button type="button" className="mh-remove" onClick={() => removeRange(day.id, i)} aria-label="Quitar horario">×</button>
                         )}
@@ -175,8 +176,8 @@ export default function MisHorarios() {
                   })}
                   <div className="mh-day-actions">
                     <button type="button" className="mh-add" onClick={() => addRange(day.id)}>+ Agregar otro horario</button>
-                    <button type="button" className="mh-apply-all" onClick={() => applyToAllActiveDays(day.id)}>
-                      {appliedFrom === day.id ? 'Aplicado ✓' : 'Aplicar a todos los días activos'}
+                    <button type="button" className="mh-apply-all" onClick={() => setCopySource(day.id)}>
+                      {appliedFrom === day.id ? 'Copiado ✓' : 'Copiar a otros días'}
                     </button>
                   </div>
                 </div>
@@ -185,6 +186,10 @@ export default function MisHorarios() {
           );
         })}
       </div>
+
+      {copySource != null && (
+        <CopyDaysModal sourceId={copySource} ranges={schedule[copySource] || []} onApply={applyCopy} onClose={() => setCopySource(null)} />
+      )}
 
       <div className="mh-footer">
                <button type="button" className="mh-save" onClick={handleSave} disabled={saving || hasInvalidRange}>

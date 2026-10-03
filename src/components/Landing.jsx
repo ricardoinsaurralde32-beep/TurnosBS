@@ -194,11 +194,14 @@ export default function Landing() {
   }, [businessSlug]);
 
   useEffect(() => {
+    if (!businessData?.id) return;
+    let cancelled = false;
     (async () => {
-      const { data } = await fetchApprovedReviewsReal();
-      setApprovedReviews(data);
+      const { data } = await fetchApprovedReviewsReal(businessData.id);
+      if (!cancelled) setApprovedReviews(data);
     })();
-  }, []);
+    return () => { cancelled = true; };
+  }, [businessData?.id]);
 
   /* La barra de scroll del navegador es nativa (no vive dentro de ".page"), así
      que el color de acento que se aplica inline en ".page" no le llega — por eso
@@ -285,6 +288,17 @@ export default function Landing() {
     return null;
   };
 
+  // Con un solo profesional no hay nada que elegir: queda elegido de entrada (sin saltar de pantalla)
+  const selectOnlyPro = async (pro) => {
+    setBookedMapReady(false);
+    const [bMap, xMap] = await Promise.all([fetchBookedTimesMap(pro.id), fetchBlockedSlotsMap(pro.id)]);
+    setProfessionalState(pro);
+    setBookedMap(bMap);
+    setBlockedSlotsMap(xMap);
+    setBookedMapReady(true);
+    setMonth(firstUsefulMonth(pro, bMap, xMap));
+  };
+
   /* ---------- Resuelve ?prof=&date=&quick= una sola vez ---------- */
   useEffect(() => {
     if (!businessData || urlHandledRef.current) return;
@@ -292,7 +306,11 @@ export default function Landing() {
 
     const params = new URLSearchParams(window.location.search);
     const slug = params.get('prof');
-    if (!slug) return;
+    if (!slug) {
+      const bookable = businessData.professionals.filter((p) => p.services.length > 0);
+      if (bookable.length === 1) selectOnlyPro(bookable[0]);
+      return;
+    }
 
     const pro = businessData.professionals.find((p) => p.slug === slug && p.services.length > 0);
     if (!pro) return;
@@ -629,6 +647,8 @@ export default function Landing() {
     setErrors({});
     setLinkWarning('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    const bookable = (businessData?.professionals || []).filter((p) => p.services.length > 0);
+    if (bookable.length === 1) selectOnlyPro(bookable[0]);
   };
 
   if (!businessData) {
@@ -667,6 +687,8 @@ export default function Landing() {
 
   const rawDateLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
   const todayLabel = rawDateLabel.charAt(0).toUpperCase() + rawDateLabel.slice(1);
+  const bookablePros = businessData.professionals.filter((p) => p.services.length > 0);
+  const onlyPro = bookablePros.length === 1 ? bookablePros[0] : null;
   const hasPlacePhotos = (businessData.placePhotos || []).length > 0;
   const reminderHint = buildReminderHint(businessData.reminders);
   // El acento de la página (botones, links, resaltados) depende del esquema de color
@@ -686,13 +708,19 @@ export default function Landing() {
       </div>
 
       <header className="hero">
-        <div className="hero-logo">
-          <img src={businessData.logo} alt={businessData.name} />
-        </div>
-        <div className="neon-line"><span /></div>
+        {businessData.logo && (
+          <div className={`hero-logo ${businessData.showBusinessName ? '' : 'hero-logo-flush'}`}>
+            <img src={businessData.logo} alt={businessData.name} />
+          </div>
+        )}
+        {businessData.showBusinessName ? (
+          <h1 className={`hero-name ${businessData.logo ? '' : 'hero-name-solo'}`}>{businessData.name}</h1>
+        ) : (
+          <h1 className="hero-title sr-only">{businessData.name}</h1>
+        )}
+        {(businessData.logo || businessData.showBusinessName) && <div className="neon-line"><span /></div>}
 
         <div className="hero-body">
-          <h1 className="hero-title sr-only">{businessData.name}</h1>
           <p className="hero-tagline">{businessData.tagline}</p>
 
           <div className="hero-date">
@@ -700,7 +728,7 @@ export default function Landing() {
             <span>{todayLabel}</span>
           </div>
 
-          <button className="btn-cta" onClick={() => scrollTo(proRef)}>
+          <button className="btn-cta" onClick={() => scrollTo(onlyPro ? dateRef : proRef)}>
             <span className="btn-cta-shine" />
             Reserva ahora
           </button>
@@ -708,16 +736,17 @@ export default function Landing() {
         </div>
       </header>
 
-      <section className="section" ref={proRef}>
-        <h2 className="section-title">Elije un profesional</h2>
+      <section className={`section ${onlyPro ? 'section-pro-single' : ''}`} ref={proRef}>
+        {!onlyPro && <h2 className="section-title">Elije un profesional</h2>}
 
-        <div className="pro-grid">
+        <div className={`pro-grid ${onlyPro ? 'pro-grid-single' : ''}`}>
           {businessData.professionals.filter((p) => p.services.length > 0).map((pro, i) => (
             <ProCard
               key={pro.id}
               pro={pro}
               seed={i + 1}
               isActive={professional?.id === pro.id}
+              single={!!onlyPro}
               onChoose={() => handleSelectPro(pro)}
               onViewPortfolio={setPortfolioPro}
             />
@@ -776,7 +805,7 @@ export default function Landing() {
             ) : !hasAnySlots ? (
               <div className="alert">
                 <p>{professional.name} no tiene turnos disponibles por ahora.</p>
-                <p>Probá con otro profesional o escribinos por WhatsApp.</p>
+                <p>{onlyPro ? 'Escribinos por WhatsApp para coordinar.' : 'Probá con otro profesional o escribinos por WhatsApp.'}</p>
               </div>
             ) : (
               <>
@@ -812,7 +841,7 @@ export default function Landing() {
               <p className="section-sub">
                 {selectedDate.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · {professional.name}
               </p>
-              {businessData.slotMinutes ? <p className="duration-pill duration-pill-c">Cada turno dura {formatDuration(businessData.slotMinutes)}</p> : null}
+              {businessData.showSlotDuration && businessData.slotMinutes ? <p className="duration-pill duration-pill-c">Cada turno dura {formatDuration(businessData.slotMinutes)}</p> : null}
 
               {slots.length > 0 ? (
                 <div className="slot-grid" key={currentKey} ref={slotGridRef}>
@@ -924,7 +953,7 @@ export default function Landing() {
 
             <div className="field field-center">
               <label>*Servicios</label>
-              {businessData.slotMinutes ? <p className="duration-pill">Cada turno dura {formatDuration(businessData.slotMinutes)}</p> : null}
+              {businessData.showSlotDuration && businessData.slotMinutes ? <p className="duration-pill">Cada turno dura {formatDuration(businessData.slotMinutes)}</p> : null}
               <div className="service-chips">
                 {proServices.map((s) => (
                   <button key={s.id} type="button"
@@ -1011,4 +1040,4 @@ export default function Landing() {
       )}
     </div>
   );
-}
+}
