@@ -12,6 +12,12 @@ export default function ManageBookingModal({ business, initialCode, onClose }) {
   const [cancelled, setCancelled] = useState(false);
   const [cancelError, setCancelError] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [tooLate, setTooLate] = useState(false);
+
+  // El cliente cancela solo hasta (anticipación mínima del negocio + 1 hora) antes del turno
+  const windowHours = Math.ceil(Number(business.minHoursAhead || 0)) + 1;
+  const hoursLeft = booking ? (new Date(`${booking.date}T${booking.time}:00-03:00`).getTime() - Date.now()) / 3600000 : Infinity;
+  const canCancelOnline = hoursLeft >= windowHours;
 
   const handleSearch = async (e) => {
     e?.preventDefault();
@@ -41,10 +47,10 @@ export default function ManageBookingModal({ business, initialCode, onClose }) {
   const handleCancel = async () => {
     setCanceling(true);
     setCancelError(false);
-    const { success } = await cancelBookingByCode(business.id, code.trim());
+    const { success, tooLate: late } = await cancelBookingByCode(business.id, code.trim());
     setCanceling(false);
     if (!success) {
-      setCancelError(true);
+      if (late) { setTooLate(true); setConfirming(false); } else setCancelError(true);
       return;
     }
     // Los mails de cancelación (al cliente y al profesional) los manda el servidor solo.
@@ -72,7 +78,12 @@ export default function ManageBookingModal({ business, initialCode, onClose }) {
               </div>
             </div>
 
-            {confirming ? (
+            {(!canCancelOnline || tooLate) ? (
+              <p className="mb-error">
+                Ya no se puede cancelar online: falta menos de {windowHours} {windowHours === 1 ? 'hora' : 'horas'} para tu turno.
+                Escribile al negocio por WhatsApp si no vas a poder asistir.
+              </p>
+            ) : confirming ? (
               <div className="mb-form">
                 <p className="mb-empty">¿Seguro que querés cancelar este turno?</p>
                 <button type="button" className="mb-cancel-btn" onClick={handleCancel} disabled={canceling}>

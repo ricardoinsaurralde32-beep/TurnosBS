@@ -542,7 +542,7 @@ export async function cancelBookingByCode(businessId, code) {
     p_business_id: businessId,
     p_code: code.trim()
   });
-  if (error) return { success: false, error };
+  if (error) return { success: false, error, tooLate: /CANCEL_WINDOW/.test(error.message || '') };
   return { success: !!data, error: null };
 }
 
