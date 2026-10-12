@@ -178,3 +178,48 @@
 }
 .tn-chip.on { background: var(--neon); color: var(--neon-ink, #0a0a0a); border-color: var(--neon); }
 .tn-chip-clear { background: none; border: 0; color: var(--gray); font-size: 0.78rem; text-decoration: underline; cursor: pointer; }
+
+/* ===== Agenda por semana ===== */
+.tn-modes { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.tn-mode {
+  padding: 8px 16px; border-radius: 999px; font-size: 0.8rem; font-weight: 700;
+  background: var(--panel); color: var(--gray); border: 1px solid var(--border); cursor: pointer;
+}
+.tn-mode.on { background: var(--neon); color: var(--neon-ink, #0a0a0a); border-color: var(--neon); }
+
+.tn-weekbar { margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+.tn-days-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.tn-day-btn {
+  padding: 7px 13px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+  background: var(--panel); color: var(--white); border: 1px solid var(--border);
+}
+.tn-day-btn:hover { border-color: var(--neon); }
+.tn-day-btn.on { background: var(--neon); color: var(--neon-ink, #0a0a0a); border-color: var(--neon); }
+
+.tn-weeknav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tn-nav-btn {
+  padding: 7px 14px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; cursor: pointer;
+  border: 1px solid rgba(var(--neon-rgb), 0.35);
+  background-color: rgba(var(--neon-rgb), 0.06);
+  color: var(--neon);
+}
+.tn-nav-btn:hover { background-color: rgba(var(--neon-rgb), 0.14); }
+.tn-week-label { color: var(--white); font-size: 0.82rem; font-weight: 700; padding: 0 4px; }
+
+.tn-week { display: flex; flex-direction: column; gap: 18px; }
+.tn-day-head {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  margin: 0 0 8px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.tn-day-name { color: var(--white); font-size: 1.05rem; font-weight: 800; }
+.tn-day-date { color: var(--gray); font-size: 0.82rem; font-weight: 600; }
+.tn-day-rel {
+  font-size: 0.66rem; font-weight: 800; color: var(--neon);
+  background-color: rgba(var(--neon-rgb), 0.1);
+  border: 1px solid rgba(var(--neon-rgb), 0.3);
+  padding: 2px 9px; border-radius: 999px;
+}
+.tn-day-count { margin-left: auto; color: var(--gray); font-size: 0.74rem; font-weight: 600; }
+.tn-day-today .tn-day-head { border-bottom-color: var(--neon); }
+.tn-day-past { opacity: 0.55; }
