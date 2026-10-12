@@ -2,6 +2,31 @@
 .mh-head h1 { color: var(--white); font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
 .mh-sub { color: var(--gray); font-size: 0.85rem; }
 
+.mh-lead {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 16px;
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.mh-lead h2 { color: var(--white); font-size: 0.98rem; margin: 0; }
+.mh-lead p, .mh-lead label { color: var(--gray); font-size: 0.82rem; margin: 0; }
+.mh-lead input {
+  width: 100%;
+  max-width: 220px;
+  padding: 9px 11px;
+  color: var(--white);
+  background: var(--black);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.mh-lead input:focus { outline: none; border-color: var(--neon); }
+.mh-lead-error, .mh-save-error { color: var(--danger); font-size: 0.78rem; }
+
 .mh-days { display: flex; flex-direction: column; gap: 10px; }
 
 .mh-day {
@@ -59,7 +84,8 @@
 }
 .mh-apply-all:hover { background-color: rgba(var(--neon-rgb), 0.14); }
 
-.mh-footer { position: sticky; bottom: 90px; margin-top: 26px; display: flex; justify-content: center; }
+.mh-footer { position: sticky; bottom: 90px; margin-top: 26px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.mh-save-error { margin: 0; }
 
 .mh-save {
   padding: 13px 40px; background-color: var(--neon); color: var(--neon-ink, #0a0a0a); font-weight: 800;
@@ -68,7 +94,7 @@
 .mh-save:hover { transform: translateY(-2px); box-shadow: 0 0 28px var(--neon-soft); }
 
 @media (min-width: 900px) {
-  .mh-footer { bottom: 0; justify-content: flex-start; }
+  .mh-footer { bottom: 0; align-items: flex-start; }
   .mh-day { padding: 16px 20px; }
 }
 

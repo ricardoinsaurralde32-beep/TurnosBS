@@ -25,9 +25,13 @@ export default function MisHorarios() {
   const [saved, setSaved] = useState(false);
   const [appliedFrom, setAppliedFrom] = useState(null);
   const [usesOwnSchedule, setUsesOwnSchedule] = useState(false);
+  const [businessMinHoursAhead, setBusinessMinHoursAhead] = useState(0);
+  const [minHoursAhead, setMinHoursAhead] = useState('');
+  const [saveError, setSaveError] = useState('');
 
   // Recuerda los últimos horarios de cada día, para restaurarlos si lo apagás y prendés de nuevo
   const lastRangesRef = useRef({});
+  const initialScheduleRef = useRef('');
 
   useEffect(() => {
     (async () => {
@@ -40,6 +44,9 @@ export default function MisHorarios() {
       const initial = data?.schedule ? cloneSchedule(data.schedule) : cloneSchedule(biz?.schedule);
       setSchedule(initial);
       setUsesOwnSchedule(!!data?.schedule);
+      initialScheduleRef.current = JSON.stringify(initial);
+      setBusinessMinHoursAhead(biz?.min_hours_ahead ?? 0);
+      setMinHoursAhead(data?.min_hours_ahead == null ? '' : String(data.min_hours_ahead));
 
       // Precarga la memoria con lo que ya había, así el primer "apagar/prender" no lo resetea
       WEEKDAYS.forEach((day) => {
@@ -108,20 +115,32 @@ export default function MisHorarios() {
     setTimeout(() => setAppliedFrom(null), 2000);
   };
 
-    const hasInvalidRange = Object.values(schedule).some((ranges) =>
+  const hasInvalidRange = Object.values(schedule).some((ranges) =>
     ranges.some(([from, to]) => {
       const toMin = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
       return toMin(to) <= toMin(from);
     })
   );
 
+  const invalidMinHoursAhead = minHoursAhead !== '' &&
+    (!/^\d{1,3}(\.\d{1,2})?$/.test(minHoursAhead) || Number(minHoursAhead) > 999);
+
   const handleSave = async () => {
-    if (hasInvalidRange) return;
+    if (hasInvalidRange || invalidMinHoursAhead) return;
     setSaving(true);
-    const { error } = await updateProfessional(session.professionalId, { schedule });
+    setSaveError('');
+    const scheduleChanged = JSON.stringify(schedule) !== initialScheduleRef.current;
+    const fields = { min_hours_ahead: minHoursAhead === '' ? null : Number(minHoursAhead) };
+    if (usesOwnSchedule || scheduleChanged) fields.schedule = schedule;
+    const { error } = await updateProfessional(session.professionalId, fields);
     setSaving(false);
-    if (!error) {
-      setUsesOwnSchedule(true);
+    if (error) {
+      setSaveError('No pudimos guardar los cambios. Probá de nuevo.');
+    } else {
+      if (fields.schedule) {
+        setUsesOwnSchedule(true);
+        initialScheduleRef.current = JSON.stringify(schedule);
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     }
@@ -136,9 +155,30 @@ export default function MisHorarios() {
         <p className="mh-sub">
           {usesOwnSchedule
             ? 'Definí en qué días y horarios trabajás'
-            : 'Todavía usás el horario general del negocio. Guardá para tener el tuyo propio.'}
+            : 'Todavía usás el horario general del negocio. Modificá los días u horarios para definir el tuyo propio.'}
         </p>
       </div>
+
+      <section className="mh-lead">
+        <h2>Anticipación mínima para reservar</h2>
+        <p>
+          {minHoursAhead === ''
+            ? `Usás la configuración del negocio: ${businessMinHoursAhead} hora${businessMinHoursAhead === 1 ? '' : 's'}.`
+            : 'Este valor reemplaza la anticipación mínima general del negocio para tus turnos.'}
+        </p>
+        <label htmlFor="mh-min-hours">Horas de anticipación (podés usar fracciones; dejalo vacío para usar la del negocio)</label>
+        <input
+          id="mh-min-hours"
+          type="number"
+          min="0"
+          max="999"
+          step="0.01"
+          value={minHoursAhead}
+          placeholder={`General: ${businessMinHoursAhead} h`}
+          onChange={(e) => { setSaved(false); setSaveError(''); setMinHoursAhead(e.target.value); }}
+        />
+        {invalidMinHoursAhead && <small className="mh-lead-error">Ingresá un número entre 0 y 999, con hasta dos decimales.</small>}
+      </section>
 
       <div className="mh-days">
         {WEEKDAYS.map((day) => {
@@ -192,8 +232,9 @@ export default function MisHorarios() {
       )}
 
       <div className="mh-footer">
-               <button type="button" className="mh-save" onClick={handleSave} disabled={saving || hasInvalidRange}>
-          {saving ? 'Guardando...' : hasInvalidRange ? 'Corregí los horarios en rojo' : saved ? 'Guardado ✓' : 'Guardar cambios'}
+        {saveError && <p className="mh-save-error" role="alert">{saveError}</p>}
+        <button type="button" className="mh-save" onClick={handleSave} disabled={saving || hasInvalidRange || invalidMinHoursAhead}>
+          {saving ? 'Guardando...' : hasInvalidRange ? 'Corregí los horarios en rojo' : invalidMinHoursAhead ? 'Revisá la anticipación' : saved ? 'Guardado ✓' : 'Guardar cambios'}
         </button>
       </div>
     </div>

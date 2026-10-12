@@ -242,7 +242,8 @@ export default function Landing() {
       if (booked.includes(time)) return false;
       const [h, m] = time.split(':').map(Number);
       const slotDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), h, m);
-      return (slotDate - now) / 3600000 >= businessData.minHoursAhead;
+      const minHoursAhead = pro.minHoursAhead ?? businessData.minHoursAhead ?? 0;
+      return (slotDate - now) / 3600000 >= minHoursAhead;
     });
   };
 

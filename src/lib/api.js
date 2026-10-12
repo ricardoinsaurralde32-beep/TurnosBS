@@ -22,7 +22,7 @@ export async function fetchBusinessData(slug) {
 
   const { data: professionals, error: proError } = await supabase
     .from('professionals')
-    .select('id, slug, name, role, photo_url, description, socials, workspace_photos, portfolio_photos, schedule, is_owner, professional_services(service_id, price)')
+    .select('id, slug, name, role, photo_url, description, socials, workspace_photos, portfolio_photos, schedule, min_hours_ahead, is_owner, professional_services(service_id, price)')
     .eq('business_id', biz.id);
   if (proError) return { data: null, error: proError };
 
@@ -52,6 +52,7 @@ export async function fetchBusinessData(slug) {
       workspacePhotos: p.workspace_photos || [],
       portfolio: p.portfolio_photos || [],
       schedule: p.schedule || null,
+      minHoursAhead: p.min_hours_ahead,
       isOwner: p.is_owner,
       services: psRows.map((ps) => serviceIdToSlug[ps.service_id]).filter(Boolean),
       servicePrices
