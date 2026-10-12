@@ -70,7 +70,7 @@ function serviceLabels(services, ids) {
 
 export default function Turnos() {
   const { session } = usePanelAuth();
-  const { services: catalogServices } = useBusinessCatalog(session.businessId);
+  const { business, services: catalogServices, professionals: catalogProfessionals, loading: catalogLoading } = useBusinessCatalog(session.businessId);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -159,11 +159,40 @@ export default function Turnos() {
     });
   }, [filteredBase, sortBy, visitsByPhone]);
 
-  // Agenda por semana: días a mostrar, y los turnos de cada día en orden de atención
+  // Cada profesional puede tener un horario propio; si no, hereda el del negocio.
+  // El dueño ve los días en que trabaja al menos uno de sus profesionales; cada profesional,
+  // únicamente los de su propio horario.
+  const workingDows = useMemo(() => {
+    const professionals = catalogProfessionals.filter((p) => {
+      if (session.role !== 'owner' && p.id !== session.professionalId) return false;
+      return proFilter === 'all' || p.id === proFilter;
+    });
+    const schedules = professionals.length
+      ? professionals.map((p) => p.schedule || business?.schedule || {})
+      : [business?.schedule || {}];
+    const days = new Set();
+    schedules.forEach((schedule) => {
+      DAY_SHORT.forEach(({ dow }) => {
+        if ((schedule?.[dow] || []).some((range) => range?.[0] && range?.[1] && range[0] !== range[1])) {
+          days.add(dow);
+        }
+      });
+    });
+    return days;
+  }, [catalogProfessionals, business, session.role, session.professionalId, proFilter]);
+
+  // Agenda: se muestran los días laborables configurados y, aunque sean excepcionales,
+  // fechas con turnos para que no se pierdan de vista.
   const monday = useMemo(() => addDays(mondayOf(new Date()), weekOffset * 7), [weekOffset]);
   const daysToShow = useMemo(
-    () => (focusDate ? [focusDate] : Array.from({ length: 7 }, (_, i) => toYmd(addDays(monday, i)))),
-    [focusDate, monday]
+    () => {
+      const dates = focusDate ? [focusDate] : Array.from({ length: 7 }, (_, i) => toYmd(addDays(monday, i)));
+      return dates.filter((date) => (
+        workingDows.has(fromYmd(date).getDay()) ||
+        filteredBase.some((b) => b.date === date && (b.status !== 'cancelled' || statusFilter === 'cancelled'))
+      ));
+    },
+    [focusDate, monday, workingDows, filteredBase, statusFilter]
   );
 
   const weekByDay = useMemo(() => {
@@ -183,10 +212,14 @@ export default function Turnos() {
   const shownList = mode === 'week' ? daysToShow.flatMap((d) => weekByDay[d]) : filtered;
   const shownCount = mode === 'week' ? weekCount : filtered.length;
 
+  const todayYmd = toYmd(new Date());
   const goToDow = (dow) => setFocusDate(nextOccurrence(dow));
   const shiftFocus = (n) => setFocusDate((d) => toYmd(addDays(fromYmd(d), n)));
   const goThisWeek = () => { setFocusDate(null); setWeekOffset(0); };
-  const todayYmd = toYmd(new Date());
+  const hasAgendaDate = (date) => (
+    workingDows.has(fromYmd(date).getDay()) ||
+    filteredBase.some((b) => b.date === date && (b.status !== 'cancelled' || statusFilter === 'cancelled'))
+  );
 
   const handleExport = () => {
     const rows = shownList.map((b) => ({
@@ -320,9 +353,11 @@ export default function Turnos() {
       {mode === 'week' && (
         <div className="tn-weekbar">
           <div className="tn-days-quick">
-            <button type="button" className={`tn-day-btn ${focusDate === todayYmd ? 'on' : ''}`} onClick={() => setFocusDate(todayYmd)}>Hoy</button>
-            <button type="button" className={`tn-day-btn ${focusDate === toYmd(addDays(new Date(), 1)) ? 'on' : ''}`} onClick={() => setFocusDate(toYmd(addDays(new Date(), 1)))}>Mañana</button>
-            {DAY_SHORT.map((d) => (
+            {hasAgendaDate(todayYmd) && <button type="button" className={`tn-day-btn ${focusDate === todayYmd ? 'on' : ''}`} onClick={() => setFocusDate(todayYmd)}>Hoy</button>}
+            {hasAgendaDate(toYmd(addDays(new Date(), 1))) && (
+              <button type="button" className={`tn-day-btn ${focusDate === toYmd(addDays(new Date(), 1)) ? 'on' : ''}`} onClick={() => setFocusDate(toYmd(addDays(new Date(), 1)))}>Mañana</button>
+            )}
+            {DAY_SHORT.filter((d) => workingDows.has(d.dow)).map((d) => (
               <button
                 key={d.dow}
                 type="button"
@@ -353,7 +388,7 @@ export default function Turnos() {
         </div>
       )}
 
-      {loading ? (
+      {loading || catalogLoading ? (
         <p className="ah-loading">Cargando...</p>
       ) : (
         <>
@@ -364,7 +399,9 @@ export default function Turnos() {
 
           {mode === 'week' ? (
             <div className="tn-week">
-              {daysToShow.map((d) => {
+              {daysToShow.length === 0 ? (
+                <div className="tn-empty"><p>No hay días de atención configurados ni turnos para mostrar en este período.</p></div>
+              ) : daysToShow.map((d) => {
                 const { name, rel } = dayTitle(d);
                 const list = weekByDay[d];
                 return (
